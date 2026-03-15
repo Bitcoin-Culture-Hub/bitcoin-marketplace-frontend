@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -15,7 +16,10 @@ type AuthStep = "form" | "verify" | "forgot";
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const from = (location.state as any)?.from || "/inventory";
+  const { login, register } = useAuth();
   const [activeTab, setActiveTab] = useState<AuthTab>("create"); // Default to create for new users
   const [step, setStep] = useState<AuthStep>("form");
   
@@ -58,23 +62,15 @@ const Login = () => {
     }
 
     setIsLoading(true);
-
-    // Simulate auth - replace with actual Supabase auth
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    // Simulate error for demo
-    if (password === "wrong") {
-      setGeneralError("Incorrect email or password.");
+    try {
+      await login(email, password);
+      toast({ title: "Welcome back", description: "You're now logged in." });
+      navigate(from, { replace: true });
+    } catch (err: any) {
+      setGeneralError(err?.message || "Incorrect email or password.");
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    setIsLoading(false);
-    toast({
-      title: "Welcome back",
-      description: "You're now logged in.",
-    });
-    navigate("/storefront/manage");
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -99,16 +95,15 @@ const Login = () => {
     }
 
     setIsLoading(true);
-
-    // Simulate account creation - replace with actual Supabase auth
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    setIsLoading(false);
-    toast({
-      title: "Account created",
-      description: "Complete your verification to start trading.",
-    });
-    navigate("/verify");
+    try {
+      await register({ email, password, first_name: username || undefined });
+      toast({ title: "Account created", description: "Complete your verification to start trading." });
+      navigate("/verify");
+    } catch (err: any) {
+      setGeneralError(err?.message || "Could not create account. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleVerificationComplete = () => {

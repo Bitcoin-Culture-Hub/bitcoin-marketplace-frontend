@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import {
   Layers,
   Plus,
+  Upload,
   Tag,
   MessageSquare,
   Package,
@@ -18,6 +19,7 @@ const QuickActions = ({ isVerified }: QuickActionsProps) => {
   const mainActions = [
     { label: "My Collection", icon: Layers, href: "/inventory" },
     { label: "Add Card", icon: Plus, href: "/submit" },
+    { label: "Bulk Import", icon: Upload, href: "/import" },
   ];
 
   const comingSoonActions = [

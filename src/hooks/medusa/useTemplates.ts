@@ -1,0 +1,132 @@
+import { useQuery } from "@tanstack/react-query"
+import { medusa } from "@/lib/medusa"
+
+// ─── Types matching your TemplateTileProps exactly ────────────────────────────
+
+export type CardTemplate = {
+  id: string
+  name: string
+  series: string
+  cardNumber: string
+  image: string
+  availableCount: number
+  floorPriceBTC: number | null
+  offersAcceptedCount: number
+  isNewSupply: boolean
+  isLowPop: boolean
+  newestSupplyAt: Date | null
+}
+
+// ─── Medusa product → your CardTemplate shape ─────────────────────────────────
+
+function toCardTemplate(product: any): CardTemplate {
+  const variants: any[] = product.variants ?? []
+
+  // Floor price: lowest variant price that has inventory
+  const availableVariants = variants.filter(
+    (v) => (v.inventory_quantity ?? 0) > 0
+  )
+  const prices = availableVariants
+    .map((v) => v.metadata?.price_btc as number | undefined)
+    .filter((p): p is number => typeof p === "number")
+  const floorPriceBTC = prices.length > 0 ? Math.min(...prices) : null
+
+  const availableCount = availableVariants.length
+
+  // isNewSupply: any variant created in the last 7 days
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const newestVariantDate = variants.reduce<Date | null>((latest, v) => {
+    const d = v.created_at ? new Date(v.created_at) : null
+    if (!d) return latest
+    return !latest || d > latest ? d : latest
+  }, null)
+  const isNewSupply = newestVariantDate
+    ? newestVariantDate.getTime() > sevenDaysAgo
+    : false
+
+  // isLowPop: fewer than 3 available copies
+  const isLowPop = availableCount > 0 && availableCount < 3
+
+  // offersAcceptedCount: variants with accepts_offers metadata flag
+  const offersAcceptedCount = variants.filter(
+    (v) => v.metadata?.accepts_offers === true
+  ).length
+
+  return {
+    id: product.id,
+    name: product.title,
+    series: (product.collection?.title as string) ?? (product.metadata?.series as string) ?? "—",
+    cardNumber: (product.metadata?.card_number as string) ?? product.handle ?? "—",
+    image: product.thumbnail ?? "",
+    availableCount,
+    floorPriceBTC,
+    offersAcceptedCount,
+    isNewSupply,
+    isLowPop,
+    newestSupplyAt: newestVariantDate,
+  }
+}
+
+// ─── Hooks ────────────────────────────────────────────────────────────────────
+
+type UseTemplatesOptions = {
+  limit?: number
+  collectionId?: string   // maps to your "series" filter
+  availableOnly?: boolean
+}
+
+export function useTemplates(options: UseTemplatesOptions = {}) {
+  const { limit = 50, collectionId, availableOnly } = options
+
+  return useQuery({
+    queryKey: ["templates", limit, collectionId, availableOnly],
+    queryFn: async () => {
+      const params: Record<string, unknown> = {
+        limit,
+        fields:
+          "id,title,handle,thumbnail,collection.*,metadata,variants.*,variants.prices.*",
+      }
+      if (collectionId) params["collection_id[]"] = collectionId
+
+      const { products } = await medusa.store.product.list(params)
+      let templates = (products as any[]).map(toCardTemplate)
+
+      if (availableOnly) {
+        templates = templates.filter((t) => t.availableCount > 0)
+      }
+
+      return templates
+    },
+    staleTime: 60_000, // 1 minute
+  })
+}
+
+export function useTemplate(productId: string) {
+  return useQuery({
+    queryKey: ["template", productId],
+    queryFn: async () => {
+      const { product } = await medusa.store.product.retrieve(productId, {
+        fields:
+          "id,title,handle,thumbnail,description,collection.*,metadata,variants.*,variants.prices.*",
+      })
+      return toCardTemplate(product as any)
+    },
+    enabled: !!productId,
+  })
+}
+
+// ─── Collections (series) for the filter sidebar ─────────────────────────────
+
+export function useCollections() {
+  return useQuery({
+    queryKey: ["collections"],
+    queryFn: async () => {
+      const { collections } = await medusa.store.collection.list()
+      return (collections as any[]).map((c) => ({
+        id: c.id as string,
+        title: c.title as string,
+      }))
+    },
+    staleTime: 5 * 60_000,
+  })
+}

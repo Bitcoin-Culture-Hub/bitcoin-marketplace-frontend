@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useVerification } from "@/hooks/medusa/useVerification";
+import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Check } from "lucide-react";
 import Header from "@/components/layout/Header";
@@ -20,6 +22,8 @@ interface ReturnIntent {
 const VerifyStorefront = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+  const verifyMutation = useVerification();
 
   const returnTo = searchParams.get("returnTo");
   const itemId = searchParams.get("itemId");
@@ -120,9 +124,30 @@ const VerifyStorefront = () => {
     setStepNumber(4);
   };
 
-  const handleStorefrontContinue = (name: string) => {
+  const handleStorefrontContinue = async (name: string) => {
     setStorefrontName(name);
-    setCurrentStep("complete");
+    try {
+      await verifyMutation.mutateAsync({
+        fullName: addressData.fullName,
+        addressLine1: addressData.addressLine1,
+        addressLine2: addressData.addressLine2,
+        city: addressData.city,
+        state: addressData.state,
+        postalCode: addressData.postalCode,
+        country: addressData.country,
+        phone: addressData.phone,
+        btcPayoutAddress,
+        storefrontName: name,
+        termsAccepted,
+      });
+      setCurrentStep("complete");
+    } catch (err: any) {
+      toast({
+        title: "Verification failed",
+        description: err?.message || "Could not save your details. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleComplete = () => {

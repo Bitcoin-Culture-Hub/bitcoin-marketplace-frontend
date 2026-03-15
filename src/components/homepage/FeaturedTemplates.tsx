@@ -1,67 +1,15 @@
 import { Link } from "react-router-dom";
 import { MessageSquare } from "lucide-react";
-
-interface CardTemplate {
-  id: string;
-  name: string;
-  series: string;
-  availableCount: number;
-  fromPriceBTC: string;
-  offersAccepted: boolean;
-}
-
-const featuredTemplates: CardTemplate[] = [
-  {
-    id: "1",
-    name: "Satoshi Nakamoto Genesis",
-    series: "Series 1 OPP",
-    availableCount: 12,
-    fromPriceBTC: "0.85",
-    offersAccepted: true,
-  },
-  {
-    id: "2",
-    name: "Bitcoin Whitepaper",
-    series: "Commemorative",
-    availableCount: 8,
-    fromPriceBTC: "1.2",
-    offersAccepted: true,
-  },
-  {
-    id: "3",
-    name: "Block 0 Genesis",
-    series: "Series 1 OPP",
-    availableCount: 5,
-    fromPriceBTC: "0.45",
-    offersAccepted: true,
-  },
-  {
-    id: "4",
-    name: "Hal Finney Tribute",
-    series: "Series 2 OPP",
-    availableCount: 18,
-    fromPriceBTC: "0.32",
-    offersAccepted: false,
-  },
-  {
-    id: "5",
-    name: "Lightning Network Launch",
-    series: "Commemorative",
-    availableCount: 9,
-    fromPriceBTC: "0.28",
-    offersAccepted: true,
-  },
-  {
-    id: "6",
-    name: "Bitcoin Pizza Day",
-    series: "Commemorative",
-    availableCount: 14,
-    fromPriceBTC: "0.55",
-    offersAccepted: true,
-  },
-];
+import { useTemplates } from "@/hooks/medusa/useTemplates";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const FeaturedTemplates = () => {
+  // Fetch up to 6 available templates, sorted by lowest floor price
+  const { data: templates = [], isLoading } = useTemplates({
+    limit: 6,
+    availableOnly: true,
+  });
+
   return (
     <section className="bg-background border-b border-border">
       <div className="max-w-5xl mx-auto px-6 py-16">
@@ -70,36 +18,62 @@ const FeaturedTemplates = () => {
         </h2>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {featuredTemplates.map((template) => (
-            <Link
-              key={template.id}
-              to={`/card/${template.id}`}
-              className="group border border-border bg-card hover:bg-muted/50 transition-colors p-4"
-            >
-              {/* Card Info */}
-              <h3 className="text-sm font-medium text-foreground line-clamp-2 leading-snug mb-1">
-                {template.name}
-              </h3>
-              <p className="text-[10px] text-muted-foreground mb-3">
-                {template.series}
-              </p>
-
-              {/* Availability */}
-              <div className="text-xs text-muted-foreground mb-1">
-                {template.availableCount} available
+          {isLoading &&
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="border border-border bg-card p-4 space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-3 w-2/3" />
+                <Skeleton className="h-3 w-1/2 mt-3" />
+                <Skeleton className="h-3 w-3/4" />
               </div>
+            ))}
 
-              {/* Price + Offer Indicator */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-medium text-foreground">
-                  From {template.fromPriceBTC} BTC
-                </span>
-                {template.offersAccepted && (
-                  <MessageSquare className="h-3 w-3 text-muted-foreground" strokeWidth={1.5} />
+          {!isLoading &&
+            templates.map((template) => (
+              <Link
+                key={template.id}
+                to={`/marketplace/templates/${template.id}`}
+                className="group border border-border bg-card hover:bg-muted/50 transition-colors p-4"
+              >
+                {template.image && (
+                  <div className="aspect-[3/4] bg-muted overflow-hidden mb-3">
+                    <img
+                      src={template.image}
+                      alt={template.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
                 )}
-              </div>
-            </Link>
-          ))}
+
+                <h3 className="text-sm font-medium text-foreground line-clamp-2 leading-snug mb-1">
+                  {template.name}
+                </h3>
+                <p className="text-[10px] text-muted-foreground mb-3">
+                  {template.series}
+                </p>
+
+                <div className="text-xs text-muted-foreground mb-1">
+                  {template.availableCount} available
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-medium text-foreground">
+                    {template.floorPriceBTC !== null
+                      ? `From ${template.floorPriceBTC} BTC`
+                      : "—"}
+                  </span>
+                  {template.offersAcceptedCount > 0 && (
+                    <MessageSquare className="h-3 w-3 text-muted-foreground" strokeWidth={1.5} />
+                  )}
+                </div>
+              </Link>
+            ))}
+
+          {!isLoading && templates.length === 0 && (
+            <div className="col-span-full text-center py-8 text-sm text-muted-foreground">
+              No featured cards available right now.
+            </div>
+          )}
         </div>
       </div>
     </section>

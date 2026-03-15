@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSubmitCard } from "@/hooks/medusa/useSubmitCard";
 import { useNavigate } from "react-router-dom";
 import { Check, AlertCircle, Loader2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ type VerificationState = "idle" | "checking" | "verified" | "not_found" | "exist
 const AddCard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const submitCard = useSubmitCard();
 
   // Form state
   const [cardSet, setCardSet] = useState("");
@@ -86,19 +88,32 @@ const AddCard = () => {
   // Submit handler
   const handleSubmit = async () => {
     if (!isFormValid) return;
-
     setIsSubmitting(true);
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    toast({
-      title: "Added to your collection ✓",
-      description: `${gradingCompany} ${grade} · Cert #${certNumber}`,
-    });
-
-    // Navigate to the new collection item detail
-    navigate("/collection/item/new-item-123");
+    try {
+      await submitCard.mutateAsync({
+        cardSet,
+        cardName,
+        gradingCompany,
+        certNumber,
+        grade,
+        serialNumber,
+        listingIntent,
+        askPrice: listingIntent !== "private" ? askPrice : undefined,
+      });
+      toast({
+        title: "Added to your collection ✓",
+        description: `${gradingCompany} ${grade} · Cert #${certNumber}`,
+      });
+      navigate("/inventory");
+    } catch (err: any) {
+      toast({
+        title: "Submission failed",
+        description: err?.message || "Could not add card. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
