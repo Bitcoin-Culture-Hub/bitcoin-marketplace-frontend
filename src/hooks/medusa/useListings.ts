@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { medusa } from "@/lib/medusa"
+import { getCardImages } from "@/services/cardImageLookup"
 
 // ─── Types matching your existing Listing interface in CopiesTable ────────────
 
@@ -19,6 +20,8 @@ export type Listing = {
   shipsFromRegion: string
   createdAt: Date
   slabPhotos?: string[]
+  /** Listing no longer available (sold / metadata) */
+  isSold: boolean
 }
 
 export type TemplateDetail = {
@@ -30,6 +33,7 @@ export type TemplateDetail = {
   printRun?: number
   designNotes: string
   images: string[]
+  backImage?: string | null
 }
 
 // ─── Medusa variant → your Listing shape ──────────────────────────────────────
@@ -44,15 +48,41 @@ function toListingAndTemplate(product: any): {
     images.unshift(product.thumbnail)
   }
 
+  const series = product.collection?.title ?? meta.series_name ?? meta.series ?? "—"
+  const cardNumber = meta.card_number ?? product.handle ?? "—"
+
+  // Enrich with output.json images, then fall back to product metadata
+  let backImage: string | null = null
+  const match = getCardImages(product.title, cardNumber, series)
+  if (match) {
+    images.unshift(match.frontImageFull)
+    if (match.backImageFull) {
+      images.push(match.backImageFull)
+      backImage = match.backImageFull
+    }
+  } else if (meta.front_image_full) {
+    if (!images.includes(meta.front_image_full as string)) {
+      images.unshift(meta.front_image_full as string)
+    }
+    if (meta.back_image_full) {
+      const backUrl = meta.back_image_full as string
+      if (!images.includes(backUrl)) {
+        images.push(backUrl)
+      }
+      backImage = backUrl
+    }
+  }
+
   const template: TemplateDetail = {
     id: product.id,
     name: product.title,
-    series: product.collection?.title ?? meta.series ?? "—",
+    series,
     year: meta.year ?? "—",
-    cardNumber: meta.card_number ?? product.handle ?? "—",
+    cardNumber,
     printRun: meta.print_run ? Number(meta.print_run) : undefined,
     designNotes: product.description ?? "",
     images,
+    backImage,
   }
 
   const listings: Listing[] = (product.variants ?? []).map((v: any): Listing => {
@@ -61,6 +91,11 @@ function toListingAndTemplate(product: any): {
     const priceBTC = vm.price_btc != null ? Number(vm.price_btc) : null
     const priceUSD =
       v.prices?.find((p: any) => p.currency_code === "usd")?.amount ?? null
+
+    const isSold =
+      vm.is_sold === true ||
+      vm.sold === true ||
+      vm.state === "sold"
 
     return {
       id: v.id,
@@ -78,6 +113,7 @@ function toListingAndTemplate(product: any): {
       shipsFromRegion: vm.ships_from_region ?? "—",
       createdAt: v.created_at ? new Date(v.created_at) : new Date(),
       slabPhotos: vm.slab_photos ? (vm.slab_photos as string[]) : undefined,
+      isSold,
     }
   })
 

@@ -20,11 +20,11 @@ const QuickActions = ({ isVerified }: QuickActionsProps) => {
     { label: "My Collection", icon: Layers, href: "/inventory" },
     { label: "Add Card", icon: Plus, href: "/submit" },
     { label: "Bulk Import", icon: Upload, href: "/import" },
+    { label: "Offers", icon: MessageSquare, href: "/dashboard/offers" },
   ];
 
   const comingSoonActions = [
     { label: "Create Listing", icon: Tag, href: "/submit?step=listing" },
-    { label: "Offers", icon: MessageSquare, href: "/offers" },
     { label: "Orders", icon: Package, href: "/orders" },
     { label: "Wallet", icon: Wallet, href: "/wallet" },
   ];

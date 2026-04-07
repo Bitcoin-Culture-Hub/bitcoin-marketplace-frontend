@@ -10,6 +10,7 @@ import EmailVerification from "@/components/auth/EmailVerification";
 import ForgotPassword from "@/components/auth/ForgotPassword";
 import WalletConnection from "@/components/auth/WalletConnection";
 import AccountUnlocks from "@/components/auth/AccountUnlocks";
+import Header from "@/components/layout/Header";
 
 type AuthTab = "login" | "create";
 type AuthStep = "form" | "verify" | "forgot";
@@ -130,7 +131,9 @@ const Login = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header variant="light" />
+      <div className="flex-1 flex flex-col lg:flex-row">
       {/* Left Panel - Identity & Invitation (60%) */}
       <div className="w-full lg:w-[60%] flex flex-col justify-center px-8 py-16 lg:py-0 lg:px-16 xl:px-24">
         <div className="max-w-lg">
@@ -500,6 +503,7 @@ const Login = () => {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

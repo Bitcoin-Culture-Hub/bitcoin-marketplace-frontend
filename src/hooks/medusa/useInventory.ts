@@ -52,17 +52,23 @@ export function useInventory() {
   return useQuery({
     queryKey: ["inventory", customer?.id],
     queryFn: async () => {
-      // Fetch products where seller metadata matches current customer
       const { products } = await medusa.store.product.list({
         limit: 100,
         fields:
           "id,title,handle,collection.*,metadata,variants.*,variants.prices.*",
       });
 
-      // Filter to only this seller's products (by metadata.seller_id)
-      const mine = (products as any[]).filter(
-        (p) => p.metadata?.seller_id === customer?.id
-      );
+      // Filter to products that have at least one variant owned by this seller.
+      // Then scope each product's variants to only this seller's copies.
+      const sellerId = customer?.id;
+      const mine = (products as any[])
+        .map((p) => ({
+          ...p,
+          variants: (p.variants ?? []).filter(
+            (v: any) => v.metadata?.seller_id === sellerId
+          ),
+        }))
+        .filter((p) => p.variants.length > 0);
 
       return mine.map(toCollectionTemplate);
     },
@@ -109,6 +115,7 @@ export function useUpdateVariantMeta() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["inventory", customer?.id] });
+      queryClient.invalidateQueries({ queryKey: ["vendor", "summary"] });
     },
   });
 }

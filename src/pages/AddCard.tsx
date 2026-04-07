@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useSubmitCard } from "@/hooks/medusa/useSubmitCard";
+import { useCardCatalog } from "@/hooks/medusa/useCardCatalog";
 import { useNavigate } from "react-router-dom";
 import { Check, AlertCircle, Loader2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,12 +43,8 @@ const AddCard = () => {
   const [listingIntent, setListingIntent] = useState<"private" | "fixed" | "both">("private");
   const [askPrice, setAskPrice] = useState("");
 
-  // Mock card sets and cards data
-  const cardSets: Record<string, string[]> = {
-    "Series 1 OPP": ["Satoshi Nakamoto", "Hal Finney", "Nick Szabo", "Wei Dai", "Adam Back"],
-    "Series 2 OPP": ["Lightning Node", "Genesis Block", "Whitepaper", "Pizza Day", "Block Reward"],
-    "Series 3 OPP": ["Cold Storage", "Hardware Wallet", "Seed Phrase", "Full Node", "Mining Rig"],
-  };
+  // Card catalog loaded from the database
+  const { data: cardSets = {}, isLoading: isCatalogLoading } = useCardCatalog();
 
   const availableCards = cardSet ? cardSets[cardSet] || [] : [];
 
@@ -186,7 +183,12 @@ const AddCard = () => {
                   <SelectItem value="8">8 (NM-MT)</SelectItem>
                   <SelectItem value="7.5">7.5</SelectItem>
                   <SelectItem value="7">7 (NM)</SelectItem>
+                  <SelectItem value="6.5">6.5</SelectItem>
                   <SelectItem value="6">6 (EX-MT)</SelectItem>
+                  <SelectItem value="5.5">5.5</SelectItem>
+                  <SelectItem value="5">5 (EX)</SelectItem>
+                  <SelectItem value="4">4 (VG-EX)</SelectItem>
+                  <SelectItem value="3">3 (VG)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -238,9 +240,9 @@ const AddCard = () => {
 
             <div className="space-y-2">
               <Label htmlFor="card-set">Card Set</Label>
-              <Select value={cardSet} onValueChange={(val) => { setCardSet(val); setCardName(""); }}>
+              <Select value={cardSet} onValueChange={(val) => { setCardSet(val); setCardName(""); }} disabled={isCatalogLoading}>
                 <SelectTrigger id="card-set" className="w-full">
-                  <SelectValue placeholder="Select card set" />
+                  <SelectValue placeholder={isCatalogLoading ? "Loading card sets..." : "Select card set"} />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.keys(cardSets).map((set) => (

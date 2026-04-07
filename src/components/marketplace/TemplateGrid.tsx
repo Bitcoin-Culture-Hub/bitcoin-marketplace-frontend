@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -9,7 +9,7 @@ import {
 import TemplateTile from "./TemplateTile";
 import TemplateTileSkeleton from "./TemplateTileSkeleton";
 import FilterChips, { FilterChip } from "./FilterChips";
-import MarketplaceSearch from "./MarketplaceSearch";
+import Pagination from "./Pagination";
 import { Button } from "@/components/ui/button";
 import { useTemplates } from "@/hooks/medusa/useTemplates";
 
@@ -20,7 +20,11 @@ interface TemplateGridProps {
   availableOnly: boolean;
   onRemoveFilter: (type: string, value: string) => void;
   onClearAllFilters: () => void;
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
 }
+
+const ITEMS_PER_PAGE = 12;
 
 const TemplateGrid = ({
   selectedSeries,
@@ -29,10 +33,11 @@ const TemplateGrid = ({
   availableOnly,
   onRemoveFilter,
   onClearAllFilters,
+  searchQuery,
+  onSearchChange,
 }: TemplateGridProps) => {
-  const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("floor-asc");
-  const [viewDensity] = useState<"compact" | "comfortable">("comfortable");
+  const [currentPage, setCurrentPage] = useState(1);
 
   // ── Live data from Medusa ─────────────────────────────────────────────
   const { data: allTemplates = [], isLoading, isError } = useTemplates({
@@ -114,58 +119,58 @@ const TemplateGrid = ({
     return result;
   }, [allTemplates, searchQuery, selectedSeries, sortBy]);
 
-  const gridCols =
-    viewDensity === "compact"
-      ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"
-      : "grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6";
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedSeries, selectedGradingCompanies, selectedGrades, availableOnly, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredTemplates.length / ITEMS_PER_PAGE));
+  const paginatedTemplates = filteredTemplates.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="flex-1 flex flex-col">
-      {/* Header Row */}
-      <div className="sticky top-0 z-10 bg-background border-b border-border px-6 py-4">
-        <div className="flex items-center gap-4">
-          <MarketplaceSearch
-            value={searchQuery}
-            onChange={setSearchQuery}
-            onClear={() => setSearchQuery("")}
-          />
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-44 border-border bg-background h-10 text-xs rounded-none">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="floor-asc">Floor: Low to High</SelectItem>
-              <SelectItem value="floor-desc">Floor: High to Low</SelectItem>
-              <SelectItem value="available">Most Available</SelectItem>
-              <SelectItem value="newest">Newest Supply</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="flex-1 p-6">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-xs text-muted-foreground">
-            <span className="text-foreground font-medium">{filteredTemplates.length}</span> Templates
+      {/* Sort Bar */}
+      <div className="flex items-center justify-between py-4">
+        <div className="flex items-center gap-2">
+          <span className="text-[20px] font-semibold tracking-[0.014em] text-btc-orange">
+            {filteredTemplates.length} Collectibles found
           </span>
         </div>
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className="w-[261px] h-[44px] bg-[#fefefe] border-0 rounded-btn text-base tracking-[0.014em] text-[#121212]/70">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="rounded-btn">
+            <SelectItem value="floor-asc">Floor: Low to High</SelectItem>
+            <SelectItem value="floor-desc">Floor: High to Low</SelectItem>
+            <SelectItem value="available">Most Available</SelectItem>
+            <SelectItem value="newest">Newest Supply</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-        {filterChips.length > 0 && (
+      {filterChips.length > 0 && (
+        <div className="mb-4">
           <FilterChips chips={filterChips} onRemove={handleRemoveChip} onClearAll={onClearAllFilters} />
-        )}
+        </div>
+      )}
 
+      <div className="flex-1">
         {isError && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <p className="text-sm text-destructive mb-2">Failed to load templates.</p>
-            <p className="text-xs text-muted-foreground">
-              Ensure your Medusa backend is running and <code className="bg-muted px-1">VITE_MEDUSA_BACKEND_URL</code> is set.
+            <p className="text-xs text-[#121212]/60">
+              Ensure your Medusa backend is running and <code className="bg-[#fafafa] px-1">VITE_MEDUSA_BACKEND_URL</code> is set.
             </p>
           </div>
         )}
 
         {isLoading && !isError && (
-          <div className={`grid ${gridCols}`}>
-            {Array.from({ length: 10 }).map((_, i) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-[38px]">
+            {Array.from({ length: 12 }).map((_, i) => (
               <TemplateTileSkeleton key={i} />
             ))}
           </div>
@@ -173,16 +178,16 @@ const TemplateGrid = ({
 
         {!isLoading && !isError && filteredTemplates.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <h3 className="text-lg font-medium text-foreground mb-2">No templates match your filters</h3>
-            <p className="text-sm text-muted-foreground mb-6 max-w-md">
+            <h3 className="text-lg font-medium text-[#121212] mb-2">No templates match your filters</h3>
+            <p className="text-sm text-[#121212]/60 mb-6 max-w-md">
               Try adjusting your search or filters to find what you're looking for.
             </p>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={onClearAllFilters} className="rounded-none">
+              <Button variant="outline" onClick={onClearAllFilters} className="rounded-btn">
                 Clear filters
               </Button>
               {availableOnly && (
-                <Button variant="outline" onClick={() => onRemoveFilter("availability", "available-only")} className="rounded-none">
+                <Button variant="outline" onClick={() => onRemoveFilter("availability", "available-only")} className="rounded-btn">
                   Show unavailable
                 </Button>
               )}
@@ -190,12 +195,24 @@ const TemplateGrid = ({
           </div>
         )}
 
-        {!isLoading && !isError && filteredTemplates.length > 0 && (
-          <div className={`grid ${gridCols}`}>
-            {filteredTemplates.map((template) => (
-              <TemplateTile key={template.id} {...template} />
-            ))}
-          </div>
+        {!isLoading && !isError && paginatedTemplates.length > 0 && (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-[38px]">
+              {paginatedTemplates.map((template) => (
+                <TemplateTile key={template.id} {...template} />
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-14">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

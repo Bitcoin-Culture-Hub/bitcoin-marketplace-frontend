@@ -1,52 +1,97 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import MakeOfferModal from "./MakeOfferModal";
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { OfferModal, type OfferModalCard } from "@/components/marketplace/OfferModal"
+import { useAuth } from "@/context/AuthContext"
+import { useCart } from "@/context/CartContext"
+import { useToast } from "@/hooks/use-toast"
+import { Loader2 } from "lucide-react"
 
 interface Listing {
-  id: string;
-  sellerId: string;
-  sellerName: string;
-  grade: string;
-  gradingCompany: string;
-  certNumber: string;
-  price: number;
-  offersEnabled: boolean;
+  id: string
+  sellerId: string
+  sellerName: string
+  grade: string
+  gradingCompany: string
+  certNumber: string
+  price: number
+  offersEnabled: boolean
+  isSold?: boolean
 }
 
 interface CardData {
-  name: string;
-  series: string;
-  year: string;
-  cardNumber: string;
-  frontImage: string;
+  name: string
+  series: string
+  year: string
+  cardNumber: string
+  frontImage: string
 }
 
 interface ActiveListingsProps {
-  listings: Listing[];
-  card?: CardData;
+  listings: Listing[]
+  card?: CardData
 }
 
 const ActiveListings = ({ listings, card }: ActiveListingsProps) => {
-  const navigate = useNavigate();
-  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
-  const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
+  const navigate = useNavigate()
+  const { customer } = useAuth()
+  const { addLine, isBusy } = useCart()
+  const { toast } = useToast()
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null)
+  const [isOfferModalOpen, setIsOfferModalOpen] = useState(false)
+  const [addingId, setAddingId] = useState<string | null>(null)
 
-  const sortedListings = [...listings].sort((a, b) => a.price - b.price);
+  const sortedListings = [...listings].sort((a, b) => a.price - b.price)
 
-  const handleMakeOffer = (listing: Listing) => {
-    setSelectedListing(listing);
-    setIsOfferModalOpen(true);
-  };
-
-  // Default card data if not provided
   const defaultCard: CardData = {
     name: "Satoshi Nakamoto Genesis Card",
     series: "Series 1 OPP",
     year: "2022",
     cardNumber: "#001",
     frontImage: "/placeholder.svg",
-  };
+  }
+  const cardData = card ?? defaultCard
+
+  const offerCard: OfferModalCard = {
+    name: cardData.name,
+    series: cardData.series,
+    year: cardData.year,
+    cardNumber: cardData.cardNumber,
+    frontImage: cardData.frontImage,
+  }
+
+  const handleMakeOffer = (listing: Listing) => {
+    setSelectedListing(listing)
+    setIsOfferModalOpen(true)
+  }
+
+  const isViewerSeller = (l: Listing) =>
+    !!customer && customer.id === l.sellerId
+
+  const handleBuyNow = async (listing: Listing) => {
+    if (listing.isSold || isViewerSeller(listing)) return
+    if (!customer) {
+      toast({ title: "Sign in required", variant: "destructive" })
+      navigate("/login", { state: { from: window.location.pathname } })
+      return
+    }
+    setAddingId(listing.id)
+    try {
+      await addLine({
+        cardId: listing.id,
+        displayName: cardData.name,
+        gradeLabel: `${listing.gradingCompany} ${listing.grade}`,
+        priceBTC: null,
+        priceUSD: listing.price,
+      })
+      toast({ title: "Added to cart" })
+    } catch {
+      toast({ title: "Could not add to cart", variant: "destructive" })
+    } finally {
+      setAddingId(null)
+    }
+  }
 
   return (
     <section>
@@ -67,7 +112,6 @@ const ActiveListings = ({ listings, card }: ActiveListingsProps) => {
         </div>
       ) : (
         <div className="border border-border">
-          {/* Header */}
           <div className="grid grid-cols-12 gap-4 px-5 py-3 bg-muted/30 border-b border-border">
             <span className="col-span-3 text-[10px] text-muted-foreground uppercase tracking-[0.1em]">
               Seller
@@ -83,72 +127,98 @@ const ActiveListings = ({ listings, card }: ActiveListingsProps) => {
             </span>
           </div>
 
-          {/* Rows */}
           <div className="divide-y divide-border">
-            {sortedListings.map((listing) => (
-              <div
-                key={listing.id}
-                className="grid grid-cols-12 gap-4 px-5 py-4 items-center"
-              >
-                {/* Seller */}
-                <button
-                  onClick={() => navigate(`/store/${listing.sellerId}`)}
-                  className="col-span-3 text-sm text-foreground hover:text-primary transition-colors text-left truncate"
+            {sortedListings.map((listing) => {
+              const sold = listing.isSold === true
+              const canBuy = !sold && !isViewerSeller(listing)
+              const canOffer =
+                !sold && !isViewerSeller(listing) && listing.offersEnabled
+
+              return (
+                <div
+                  key={listing.id}
+                  className="grid grid-cols-12 gap-4 px-5 py-4 items-center"
                 >
-                  {listing.sellerName}
-                </button>
-
-                {/* Grade */}
-                <div className="col-span-3 flex items-center gap-2">
-                  <span className="text-[10px] font-mono text-muted-foreground border border-border px-1.5 py-0.5">
-                    {listing.gradingCompany}
-                  </span>
-                  <span className="text-base font-mono font-medium text-foreground">
-                    {listing.grade}
-                  </span>
-                </div>
-
-                {/* Price */}
-                <span className="col-span-2 text-base font-mono font-medium text-foreground">
-                  ${listing.price.toLocaleString()}
-                </span>
-
-                {/* Actions */}
-                <div className="col-span-4 flex items-center justify-end gap-2">
-                  <Button
-                    size="sm"
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs h-8 px-4 rounded-none"
+                  <button
+                    onClick={() => navigate(`/store/${listing.sellerId}`)}
+                    className="col-span-3 text-sm text-foreground hover:text-primary transition-colors text-left truncate"
                   >
-                    Buy Now
-                  </Button>
-                  {listing.offersEnabled && (
+                    {listing.sellerName}
+                  </button>
+
+                  <div className="col-span-3 flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-mono text-muted-foreground border border-border px-1.5 py-0.5">
+                      {listing.gradingCompany}
+                    </span>
+                    <span className="text-base font-mono font-medium text-foreground">
+                      {listing.grade}
+                    </span>
+                    {sold && (
+                      <Badge variant="secondary" className="rounded-none text-[10px]">
+                        Sold
+                      </Badge>
+                    )}
+                  </div>
+
+                  <span className="col-span-2 text-base font-mono font-medium text-foreground">
+                    ${listing.price.toLocaleString()}
+                  </span>
+
+                  <div className="col-span-4 flex items-center justify-end gap-2">
                     <Button
                       size="sm"
-                      variant="outline"
-                      onClick={() => handleMakeOffer(listing)}
-                      className="border-border text-xs h-8 px-4 rounded-none"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs h-8 px-4 rounded-none"
+                      disabled={!canBuy || isBusy || addingId === listing.id}
+                      onClick={() => void handleBuyNow(listing)}
                     >
-                      Make Offer
+                      {addingId === listing.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : sold ? (
+                        "Sold"
+                      ) : (
+                        "Buy now"
+                      )}
                     </Button>
-                  )}
+                    {canOffer && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleMakeOffer(listing)}
+                        className="border-border text-xs h-8 px-4 rounded-none"
+                      >
+                        Make offer
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
 
-      {/* Make Offer Modal */}
       {selectedListing && (
-        <MakeOfferModal
+        <OfferModal
           open={isOfferModalOpen}
-          onOpenChange={setIsOfferModalOpen}
-          listing={selectedListing}
-          card={card || defaultCard}
+          onOpenChange={(o) => {
+            setIsOfferModalOpen(o)
+            if (!o) setSelectedListing(null)
+          }}
+          listing={{
+            id: selectedListing.id,
+            sellerId: selectedListing.sellerId,
+            sellerName: selectedListing.sellerName,
+            grade: selectedListing.grade,
+            gradingCompany: selectedListing.gradingCompany,
+            certNumber: selectedListing.certNumber,
+            priceUsd: selectedListing.price,
+            acceptsOffers: selectedListing.offersEnabled,
+          }}
+          card={offerCard}
         />
       )}
     </section>
-  );
-};
+  )
+}
 
-export default ActiveListings;
+export default ActiveListings

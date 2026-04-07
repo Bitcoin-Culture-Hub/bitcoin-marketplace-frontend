@@ -52,13 +52,13 @@ const VerifyStorefront = () => {
       case "publish_listing":
         return itemId ? `/listing/create?item=${itemId}` : "/inventory";
       case "accept_offer":
-        return itemId ? `/offers/${itemId}` : "/storefront/manage";
+        return itemId ? `/offers/${itemId}` : "/dashboard";
       case "ship_order":
-        return itemId ? `/orders/${itemId}` : "/storefront/manage";
+        return itemId ? `/orders/${itemId}` : "/dashboard";
       case "withdraw_payout":
-        return "/storefront/manage";
+        return "/dashboard";
       default:
-        return "/storefront/manage";
+        return "/dashboard";
     }
   };
 
@@ -183,7 +183,7 @@ const VerifyStorefront = () => {
         <main className="max-w-md mx-auto px-6 py-12">
           <VerificationComplete
             onContinue={handleComplete}
-            onDashboard={() => navigate("/storefront/manage")}
+            onDashboard={() => navigate("/dashboard")}
           />
         </main>
       </div>

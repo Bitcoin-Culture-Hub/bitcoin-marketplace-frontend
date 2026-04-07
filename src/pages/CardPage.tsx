@@ -1,8 +1,9 @@
 import { useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 import TemplateImageGallery from "@/components/card/TemplateImageGallery";
 import TemplateHeader from "@/components/card/TemplateHeader";
 import MarketSummary from "@/components/card/MarketSummary";
@@ -13,14 +14,25 @@ import { useListings } from "@/hooks/medusa/useListings";
 
 const CardPage = () => {
   const { templateId } = useParams<{ templateId: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const sellerFilter = searchParams.get("seller");
 
   const { data, isLoading, isError } = useListings(templateId ?? "");
 
-  // Derive market metrics from live listings
+  // Filter listings to a specific seller when coming from a storefront page
+  const filteredListings = useMemo(() => {
+    if (!data) return [];
+    if (!sellerFilter) return data.listings;
+    return data.listings.filter((l) => l.sellerId === sellerFilter);
+  }, [data, sellerFilter]);
+
+  // Derive market metrics from filtered listings
   const metrics = useMemo(() => {
-    if (!data) return { floorBTC: null, availableCount: 0, offersAcceptedCount: 0 };
-    const available = data.listings.filter((l) => l.priceBTC !== null);
+    const available = filteredListings.filter(
+      (l) => l.priceBTC !== null && !l.isSold
+    );
     const floorBTC =
       available.length > 0
         ? Math.min(...available.map((l) => l.priceBTC as number))
@@ -28,14 +40,14 @@ const CardPage = () => {
     return {
       floorBTC,
       availableCount: available.length,
-      offersAcceptedCount: data.listings.filter((l) => l.acceptsOffers).length,
+      offersAcceptedCount: filteredListings.filter((l) => l.acceptsOffers).length,
     };
-  }, [data]);
+  }, [filteredListings]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <Header />
+      <div className="min-h-screen bg-[#fefefe] flex flex-col">
+        <Header variant="light" />
         <div className="max-w-6xl mx-auto px-6 py-8 w-full space-y-6">
           <Skeleton className="h-6 w-32" />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -53,8 +65,8 @@ const CardPage = () => {
 
   if (isError || !data) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <Header />
+      <div className="min-h-screen bg-[#fefefe] flex flex-col">
+        <Header variant="light" />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <p className="text-muted-foreground mb-4">Failed to load card details.</p>
@@ -67,11 +79,11 @@ const CardPage = () => {
     );
   }
 
-  const { template, listings } = data;
+  const { template } = data;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Header />
+    <div className="min-h-screen bg-[#fefefe] flex flex-col">
+      <Header variant="light" />
 
       <div className="max-w-6xl mx-auto px-6 py-8 w-full">
         {/* Back nav */}
@@ -80,7 +92,7 @@ const CardPage = () => {
           className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-6"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          Back to Marketplace
+          {sellerFilter ? "Back to Store" : "Back to Marketplace"}
         </button>
 
         {/* Top section: image + header + market summary */}
@@ -111,7 +123,7 @@ const CardPage = () => {
 
         {/* Copies / listings table */}
         <CopiesTable
-          listings={listings}
+          listings={filteredListings}
           card={{
             name: template.name,
             series: template.series,

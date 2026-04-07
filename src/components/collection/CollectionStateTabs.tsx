@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { cn } from "@/lib/utils";
 
 export type CollectionState = "in_collection" | "wish_list" | "listed" | "in_escrow" | "sold";
@@ -36,12 +37,11 @@ const CollectionStateTabs = ({
           const isComingSoon = tab.key !== "in_collection" && tab.key !== "wish_list";
 
           return (
-            <>
+            <Fragment key={tab.key}>
               {index === 2 && (
-                <span key="coming-soon-label" className="text-[10px] text-muted-foreground uppercase tracking-wider ml-2 mr-1">Coming soon:</span>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider ml-2 mr-1">Coming soon:</span>
               )}
               <button
-                key={tab.key}
                 onClick={() => !isComingSoon && onStateChange(tab.key)}
                 className={cn(
                   "px-4 py-3 text-sm font-medium transition-colors relative",
@@ -57,7 +57,7 @@ const CollectionStateTabs = ({
                   <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
                 )}
               </button>
-            </>
+            </Fragment>
           );
         })}
       </div>

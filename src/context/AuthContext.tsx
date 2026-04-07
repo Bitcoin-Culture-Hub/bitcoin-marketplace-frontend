@@ -91,7 +91,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 
   const logout = useCallback(async () => {
-    await medusa.auth.logout()
+    try {
+      await medusa.auth.logout()
+    } catch {
+      // Session may already be invalid server-side — clear client state regardless
+    }
     setCustomer(null)
   }, [])
 

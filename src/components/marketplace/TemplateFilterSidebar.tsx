@@ -28,22 +28,24 @@ interface FilterSectionProps {
   defaultOpen?: boolean;
 }
 
-const FilterSection = ({ title, children, defaultOpen = true }: FilterSectionProps) => {
+const FilterSection = ({ title, children, defaultOpen = false }: FilterSectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger className="flex items-center justify-between w-full py-2 group">
-        <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground group-hover:text-foreground transition-colors">
-          {title}
-        </span>
-        {isOpen ? (
-          <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
-        ) : (
-          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-        )}
-      </CollapsibleTrigger>
-      <CollapsibleContent className="pb-4">
+      <div className="w-[253px] mx-auto" style={{ padding: "10px" }}>
+        <CollapsibleTrigger className="flex items-center justify-between w-[233px] h-[48px] bg-[#fefefe] px-3 rounded-lg group cursor-pointer">
+          <span className="font-medium text-[16px] text-[#121212] tracking-[0.014em]" style={{ fontFamily: "Inter, sans-serif" }}>
+            {title}
+          </span>
+          {isOpen ? (
+            <ChevronUp className="h-5 w-5 text-[#121212]" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-[#121212]" />
+          )}
+        </CollapsibleTrigger>
+      </div>
+      <CollapsibleContent className="px-6 pb-4">
         {children}
       </CollapsibleContent>
     </Collapsible>
@@ -73,7 +75,7 @@ const TemplateFilterSidebar = ({
   onAvailableOnlyChange,
   onReset,
 }: TemplateFilterSidebarProps) => {
-  
+
 
   const handleSeriesToggle = (s: string) => {
     if (selectedSeries.includes(s)) {
@@ -100,131 +102,104 @@ const TemplateFilterSidebar = ({
   };
 
   return (
-    <aside className="w-56 flex-shrink-0 border-r border-border bg-background p-5 space-y-1">
-      {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-border mb-3">
-        <span className="text-[11px] font-medium uppercase tracking-[0.12em] text-foreground">
-          Filters
-        </span>
-        <Button
-          variant="link"
-          onClick={onReset}
-          className="text-[10px] text-muted-foreground hover:text-foreground p-0 h-auto uppercase tracking-wider"
-        >
-          Reset
-        </Button>
-      </div>
-
-      {/* Year */}
-      <div className="py-2 pb-4">
-        <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-          Year
-        </span>
-        <div className="flex gap-2 mt-2">
-          <Input
-            placeholder="From"
-            className="bg-background border-border text-xs h-8 rounded-none"
-          />
-          <Input
-            placeholder="To"
-            className="bg-background border-border text-xs h-8 rounded-none"
-          />
+    <aside className="w-[289px] flex-shrink-0 border-r border-[rgba(239,239,239,0.5)] bg-[#fefefe]">
+      {/* Inner rounded card area */}
+      <div className="rounded-[16px] pt-[84px]" style={{ gap: "24px", display: "flex", flexDirection: "column" }}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 pb-3">
+          <span className="font-medium text-[16px] text-[#121212] tracking-[0.014em]" style={{ fontFamily: "Inter, sans-serif" }}>
+            Filters
+          </span>
+          <Button
+            variant="link"
+            onClick={onReset}
+            className="text-[13px] text-[#888] hover:text-[#121212] p-0 h-auto"
+          >
+            Reset
+          </Button>
         </div>
-      </div>
 
-      {/* Set / Series */}
-      <FilterSection title="Set / Series">
-        <div className="space-y-2">
-          {series.map((s) => (
-            <label key={s} className="flex items-center gap-2.5 cursor-pointer group">
-              <Checkbox
-                checked={selectedSeries.includes(s)}
-                onCheckedChange={() => handleSeriesToggle(s)}
-                className="border-border data-[state=checked]:bg-foreground data-[state=checked]:border-foreground h-3.5 w-3.5 rounded-none"
-              />
-              <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
-                {s}
-              </span>
-            </label>
-          ))}
-        </div>
-      </FilterSection>
+        {/* Series */}
+        <FilterSection title="Series" defaultOpen>
+          <div className="space-y-3">
+            {series.map((s) => (
+              <label key={s} className="flex items-center gap-3 cursor-pointer group">
+                <Checkbox
+                  checked={selectedSeries.includes(s)}
+                  onCheckedChange={() => handleSeriesToggle(s)}
+                  className="border-[#d9d9d9] data-[state=checked]:bg-[#121212] data-[state=checked]:border-[#121212] h-4 w-4 rounded-[4px]"
+                />
+                <span className="text-[14px] text-[#555] group-hover:text-[#121212] transition-colors">
+                  {s}
+                </span>
+              </label>
+            ))}
+          </div>
+        </FilterSection>
 
-      {/* Grading Company */}
-      <FilterSection title="Grading Company">
-        <div className="space-y-2">
-          {gradingCompanies.map((company) => (
-            <label key={company} className="flex items-center gap-2.5 cursor-pointer group">
-              <Checkbox
-                checked={selectedGradingCompanies.includes(company)}
-                onCheckedChange={() => handleGradingCompanyToggle(company)}
-                className="border-border data-[state=checked]:bg-foreground data-[state=checked]:border-foreground h-3.5 w-3.5 rounded-none"
-              />
-              <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors font-mono">
-                {company}
-              </span>
-            </label>
-          ))}
-        </div>
-      </FilterSection>
+        {/* Grade */}
+        <FilterSection title="Grade">
+          <div className="space-y-3">
+            {grades.map((grade) => (
+              <label key={grade} className="flex items-center gap-3 cursor-pointer group">
+                <Checkbox
+                  checked={selectedGrades.includes(grade)}
+                  onCheckedChange={() => handleGradeToggle(grade)}
+                  className="border-[#d9d9d9] data-[state=checked]:bg-[#121212] data-[state=checked]:border-[#121212] h-4 w-4 rounded-[4px]"
+                />
+                <span className="text-[14px] text-[#555] group-hover:text-[#121212] transition-colors">
+                  {grade}
+                </span>
+              </label>
+            ))}
+          </div>
+        </FilterSection>
 
-      {/* Grade */}
-      <FilterSection title="Grade">
-        <div className="space-y-2">
-          {grades.map((grade) => (
-            <label key={grade} className="flex items-center gap-2.5 cursor-pointer group">
-              <Checkbox
-                checked={selectedGrades.includes(grade)}
-                onCheckedChange={() => handleGradeToggle(grade)}
-                className="border-border data-[state=checked]:bg-foreground data-[state=checked]:border-foreground h-3.5 w-3.5 rounded-none"
-              />
-              <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">
-                {grade}
-              </span>
-            </label>
-          ))}
-        </div>
-      </FilterSection>
+        {/* Year */}
+        <FilterSection title="Year">
+          <div className="flex gap-3 mt-1">
+            <Input
+              placeholder="From"
+              className="bg-[#fefefe] border-[#d9d9d9] text-[14px] h-10 rounded-lg"
+            />
+            <Input
+              placeholder="To"
+              className="bg-[#fefefe] border-[#d9d9d9] text-[14px] h-10 rounded-lg"
+            />
+          </div>
+        </FilterSection>
 
-      {/* Coming Soon Section */}
-      <div className="pt-4 mt-4 border-t border-border">
-        <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-          Coming Soon
-        </span>
-      </div>
+        {/* Grading Company */}
+        <FilterSection title="Grading Company">
+          <div className="space-y-3">
+            {gradingCompanies.map((company) => (
+              <label key={company} className="flex items-center gap-3 cursor-pointer group">
+                <Checkbox
+                  checked={selectedGradingCompanies.includes(company)}
+                  onCheckedChange={() => handleGradingCompanyToggle(company)}
+                  className="border-[#d9d9d9] data-[state=checked]:bg-[#121212] data-[state=checked]:border-[#121212] h-4 w-4 rounded-[4px]"
+                />
+                <span className="text-[14px] text-[#555] group-hover:text-[#121212] transition-colors">
+                  {company}
+                </span>
+              </label>
+            ))}
+          </div>
+        </FilterSection>
 
-      <div className="opacity-40 pointer-events-none select-none space-y-1">
         {/* Availability */}
-        <div className="py-2 pb-4">
-          <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-            Availability
-          </span>
-          <div className="space-y-2 mt-2">
+        <FilterSection title="Availability">
+          <div className="space-y-3 mt-1">
             <label className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Available only</span>
-              <Switch checked={false} disabled className="scale-75" />
+              <span className="text-[14px] text-[#555]">Available only</span>
+              <Switch
+                checked={availableOnly}
+                onCheckedChange={onAvailableOnlyChange}
+                className="scale-90"
+              />
             </label>
           </div>
-        </div>
-
-        {/* Price Range */}
-        <div className="py-2 pb-4">
-          <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-            Price Range (BTC)
-          </span>
-          <div className="flex gap-2 mt-2">
-            <Input
-              placeholder="Min"
-              disabled
-              className="bg-background border-border text-xs h-8 rounded-none"
-            />
-            <Input
-              placeholder="Max"
-              disabled
-              className="bg-background border-border text-xs h-8 rounded-none"
-            />
-          </div>
-        </div>
+        </FilterSection>
       </div>
     </aside>
   );

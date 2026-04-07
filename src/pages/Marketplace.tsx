@@ -1,20 +1,28 @@
 import { useState, useCallback } from "react";
 import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
+import MarketplaceHero from "@/components/marketplace/MarketplaceHero";
 import TemplateFilterSidebar from "@/components/marketplace/TemplateFilterSidebar";
 import TemplateGrid from "@/components/marketplace/TemplateGrid";
+import TrendingCollectors from "@/components/marketplace/TrendingCollectors";
+import TopSellers from "@/components/marketplace/TopSellers";
+import CreateAndSell from "@/components/marketplace/CreateAndSell";
 
 const Marketplace = () => {
+  // Search state (lifted for hero + grid)
+  const [searchQuery, setSearchQuery] = useState("");
+
   // Filter state
   const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
   const [selectedGradingCompanies, setSelectedGradingCompanies] = useState<string[]>([]);
   const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
-  const [availableOnly, setAvailableOnly] = useState(true);
+  const [availableOnly, setAvailableOnly] = useState(false);
 
   const handleReset = useCallback(() => {
     setSelectedSeries([]);
     setSelectedGradingCompanies([]);
     setSelectedGrades([]);
-    setAvailableOnly(true);
+    setAvailableOnly(false);
   }, []);
 
   const handleRemoveFilter = useCallback((type: string, value: string) => {
@@ -39,20 +47,17 @@ const Marketplace = () => {
   }, [handleReset]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Header />
+    <div className="min-h-screen bg-[#fefefe] flex flex-col">
+      <Header variant="light" />
 
-      {/* Page Title Bar */}
-      <div className="border-b border-border bg-background">
-        <div className="px-6 py-4">
-          <h1 className="text-lg font-display font-medium text-foreground">
-            Marketplace
-          </h1>
-        </div>
-      </div>
+      {/* Hero Section */}
+      <MarketplaceHero
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
 
-      {/* Sidebar + Grid */}
-      <div className="flex flex-1">
+      {/* Sidebar + Grid Section */}
+      <section className="flex bg-[#fefefe]">
         <TemplateFilterSidebar
           selectedSeries={selectedSeries}
           onSeriesChange={setSelectedSeries}
@@ -64,15 +69,25 @@ const Marketplace = () => {
           onAvailableOnlyChange={setAvailableOnly}
           onReset={handleReset}
         />
-        <TemplateGrid
-          selectedSeries={selectedSeries}
-          selectedGradingCompanies={selectedGradingCompanies}
-          selectedGrades={selectedGrades}
-          availableOnly={availableOnly}
-          onRemoveFilter={handleRemoveFilter}
-          onClearAllFilters={handleClearAllFilters}
-        />
-      </div>
+        <div className="flex-1 px-6 py-8 max-w-[1052px]">
+          <TemplateGrid
+            selectedSeries={selectedSeries}
+            selectedGradingCompanies={selectedGradingCompanies}
+            selectedGrades={selectedGrades}
+            availableOnly={availableOnly}
+            onRemoveFilter={handleRemoveFilter}
+            onClearAllFilters={handleClearAllFilters}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
+        </div>
+      </section>
+
+      {/* Bottom Sections */}
+      <TrendingCollectors />
+      <TopSellers />
+      <CreateAndSell />
+      <Footer variant="marketplace" />
     </div>
   );
 };

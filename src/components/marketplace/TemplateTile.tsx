@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MessageSquare, ArrowRight } from "lucide-react";
+import { Heart, ArrowRight } from "lucide-react";
 
 interface TemplateTileProps {
   id: string;
@@ -7,11 +8,14 @@ interface TemplateTileProps {
   series: string;
   cardNumber: string;
   image: string;
+  backImage?: string | null;
   availableCount: number;
   floorPriceBTC: number | null;
   offersAcceptedCount: number;
   isNewSupply?: boolean;
   isLowPop?: boolean;
+  /** When set, the detail page will filter listings to this seller only */
+  sellerFilter?: string;
 }
 
 const TemplateTile = ({
@@ -20,70 +24,153 @@ const TemplateTile = ({
   series,
   cardNumber,
   image,
+  backImage,
   availableCount,
   floorPriceBTC,
   offersAcceptedCount,
   isNewSupply,
   isLowPop,
+  sellerFilter,
 }: TemplateTileProps) => {
   const navigate = useNavigate();
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(false);
   const hasListings = availableCount > 0;
+  const hasBack = !!backImage;
+
+  const detailUrl = `/marketplace/templates/${id}${sellerFilter ? `?seller=${sellerFilter}` : ""}`;
 
   return (
     <div
-      onClick={() => navigate(`/marketplace/templates/${id}`)}
-      className={`group cursor-pointer transition-all duration-200 ${
-        hasListings 
-          ? "hover:-translate-y-0.5" 
-          : "opacity-60"
-      }`}
+      onClick={() => navigate(detailUrl)}
+      className="group w-full cursor-pointer p-4 bg-white shadow-card rounded-card transition-all duration-200 hover:shadow-card-hover"
     >
       {/* Image Area */}
-      <div className="relative aspect-[3/4] bg-muted border border-border overflow-hidden group-hover:border-foreground/20 transition-colors">
-        <img
-          src={image}
-          alt={name}
-          className="w-full h-full object-cover"
-        />
-        
-        {/* Gradient overlay for text legibility */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-        
+      <div
+        className="relative h-[169px]"
+        style={hasBack ? { perspective: "600px" } : undefined}
+        onMouseEnter={() => hasBack && setIsFlipped(true)}
+        onMouseLeave={() => setIsFlipped(false)}
+      >
+        {hasBack ? (
+          <div
+            className="relative w-full h-full transition-transform duration-500"
+            style={{
+              transformStyle: "preserve-3d",
+              transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+            }}
+          >
+            {/* Front face */}
+            <div
+              className="absolute inset-0 bg-card-image-bg rounded-card-inner overflow-hidden"
+              style={{ backfaceVisibility: "hidden" }}
+            >
+              <img
+                src={image}
+                alt={name}
+                className="w-full h-full object-contain -rotate-[40deg] scale-75"
+              />
+            </div>
+            {/* Back face */}
+            <div
+              className="absolute inset-0 bg-card-image-bg rounded-card-inner overflow-hidden"
+              style={{
+                backfaceVisibility: "hidden",
+                transform: "rotateY(180deg)",
+              }}
+            >
+              <img
+                src={backImage}
+                alt={`${name} back`}
+                className="w-full h-full object-contain -rotate-[40deg] scale-75"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="w-full h-full bg-card-image-bg rounded-card-inner overflow-hidden">
+            <img
+              src={image}
+              alt={name}
+              className="w-full h-full object-contain -rotate-[40deg] scale-75"
+            />
+          </div>
+        )}
 
+        {/* Favorite Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsFavorited((prev) => !prev);
+          }}
+          className="absolute top-[9px] right-[9px] z-10 w-[30px] h-[30px] bg-white rounded-full shadow-[0px_4px_10px_rgba(0,0,0,0.06)] flex items-center justify-center"
+        >
+          <Heart
+            size={16}
+            className={
+              isFavorited
+                ? "text-red-500 fill-red-500"
+                : "text-[#121212]/60"
+            }
+          />
+        </button>
       </div>
 
-      {/* Content */}
-      <div className="pt-3 space-y-2">
-        {/* Title Block */}
-        <div>
-          <h3 className="text-sm font-medium text-foreground line-clamp-2 leading-snug group-hover:text-foreground/80 transition-colors">
-            {name}
-          </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {series} • #{cardNumber}
-          </p>
-        </div>
+      {/* Content Below Image */}
+      <div className="flex flex-col gap-3 mt-3">
+        {/* Title */}
+        <h3 className="font-sans font-medium text-[14px] leading-[17px] tracking-[0.014em] text-[#121212] line-clamp-1">
+          {name}
+        </h3>
 
-        {/* Market Signal Block - THE VISUAL ANCHOR */}
-        <div className="flex items-center justify-between pt-1 border-t border-border">
-          <span className={`text-sm font-medium ${hasListings ? "text-foreground" : "text-muted-foreground"}`}>
-            {availableCount} available
+        {/* Divider */}
+        <div className="border-t border-[rgba(175,175,175,0.2)]" />
+
+        {/* Category Line */}
+        <div className="flex items-center gap-0.5">
+          <span className="text-[12px] text-[rgba(18,18,18,0.6)] tracking-[0.014em]">
+            {series}
           </span>
-          <span className={`text-sm font-display font-medium ${hasListings ? "text-foreground" : "text-muted-foreground"}`}>
-            {floorPriceBTC !== null 
-              ? `From ${floorPriceBTC} BTC` 
-              : "—"
-            }
+          <span className="text-[12px] text-[rgba(18,18,18,0.6)] tracking-[0.014em]">
+            &middot;
+          </span>
+          <span className="text-[12px] text-[rgba(18,18,18,0.6)] tracking-[0.014em]">
+            {cardNumber}
           </span>
         </div>
 
+        {/* Divider */}
+        <div className="border-t border-[rgba(175,175,175,0.2)]" />
 
-        {/* No listings state */}
-        {!hasListings && (
-          <p className="text-[11px] text-muted-foreground">
-            No active listings
-          </p>
-        )}
+        {/* Bottom Row */}
+        <div className="flex justify-between items-center">
+          {/* Price */}
+          <div className="flex flex-col">
+            <span className="text-[12px] font-medium text-[rgba(18,18,18,0.6)]">
+              Price
+            </span>
+            <span className="text-[14px] font-medium text-[#121212]">
+              {floorPriceBTC !== null ? (
+                <>
+                  {floorPriceBTC} <span className="text-[#F7931A]">BTC</span>
+                </>
+              ) : (
+                "—"
+              )}
+            </span>
+          </div>
+
+          {/* BID Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(detailUrl);
+            }}
+            className="bg-[#F7931A] text-white rounded-btn px-4 py-2.5 text-[14px] font-medium flex items-center gap-2 hover:brightness-110 transition-all"
+          >
+            BID
+            <ArrowRight size={16} />
+          </button>
+        </div>
       </div>
     </div>
   );

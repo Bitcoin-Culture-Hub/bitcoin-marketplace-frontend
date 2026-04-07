@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { medusa } from "@/lib/medusa"
+import { getCardImages } from "@/services/cardImageLookup"
 
 // ─── Types matching your TemplateTileProps exactly ────────────────────────────
 
@@ -9,6 +10,9 @@ export type CardTemplate = {
   series: string
   cardNumber: string
   image: string
+  backImage?: string | null
+  frontImageFull?: string
+  backImageFull?: string | null
   availableCount: number
   floorPriceBTC: number | null
   offersAcceptedCount: number
@@ -22,10 +26,13 @@ export type CardTemplate = {
 function toCardTemplate(product: any): CardTemplate {
   const variants: any[] = product.variants ?? []
 
-  // Floor price: lowest variant price that has inventory
-  const availableVariants = variants.filter(
-    (v) => (v.inventory_quantity ?? 0) > 0
-  )
+  // Floor price: lowest variant price that has inventory and is not sold
+  const availableVariants = variants.filter((v) => {
+    const vm = v.metadata ?? {}
+    const sold =
+      vm.is_sold === true || vm.sold === true || vm.state === "sold"
+    return (v.inventory_quantity ?? 0) > 0 && !sold
+  })
   const prices = availableVariants
     .map((v) => v.metadata?.price_btc as number | undefined)
     .filter((p): p is number => typeof p === "number")
@@ -52,12 +59,38 @@ function toCardTemplate(product: any): CardTemplate {
     (v) => v.metadata?.accepts_offers === true
   ).length
 
+  const meta = product.metadata ?? {}
+  const series = (product.collection?.title as string) ?? (meta.series_name as string) ?? (meta.series as string) ?? "—"
+  const cardNumber = (meta.card_number as string) ?? product.handle ?? "—"
+
+  let image = product.thumbnail ?? ""
+  let backImage: string | null = null
+  let frontImageFull: string | undefined
+  let backImageFull: string | null = null
+
+  // Try output.json lookup first, then fall back to product metadata
+  const match = getCardImages(product.title, cardNumber, series)
+  if (match) {
+    image = match.frontImageThumb
+    frontImageFull = match.frontImageFull
+    backImage = match.backImageThumb
+    backImageFull = match.backImageFull
+  } else if (meta.front_image_thumb) {
+    image = meta.front_image_thumb as string
+    frontImageFull = (meta.front_image_full as string) || undefined
+    backImage = (meta.back_image_thumb as string) || null
+    backImageFull = (meta.back_image_full as string) || null
+  }
+
   return {
     id: product.id,
     name: product.title,
-    series: (product.collection?.title as string) ?? (product.metadata?.series as string) ?? "—",
-    cardNumber: (product.metadata?.card_number as string) ?? product.handle ?? "—",
-    image: product.thumbnail ?? "",
+    series,
+    cardNumber,
+    image,
+    backImage,
+    frontImageFull,
+    backImageFull,
     availableCount,
     floorPriceBTC,
     offersAcceptedCount,

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { medusa } from "@/lib/medusa";
+import { createVendor } from "@/services/store.api";
 
 export type VerificationPayload = {
   // Address step
@@ -18,10 +19,22 @@ export type VerificationPayload = {
   termsAccepted: boolean;
 };
 
+/** Generates a URL-friendly slug from a store name. */
+function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 /**
  * Saves seller verification data to the customer's metadata and
  * shipping address. The `is_verified_seller` flag is what gates
  * seller actions throughout the app.
+ *
+ * Also creates a vendor record via POST /vendor so the seller has
+ * a proper storefront identity linked across cards, offers, and orders.
  */
 export function useVerification() {
   const queryClient = useQueryClient();
@@ -50,6 +63,15 @@ export function useVerification() {
         country_code: data.country.toLowerCase(),
         phone: data.phone,
         metadata: { is_return_address: true },
+      });
+
+      // 3. Create vendor record (storefront identity)
+      const { customer } = await medusa.store.customer.retrieve();
+      await createVendor({
+        name: data.storefrontName,
+        slug: toSlug(data.storefrontName),
+        email: customer.email ?? "",
+        phone: data.phone || null,
       });
     },
     onSuccess: () => {
