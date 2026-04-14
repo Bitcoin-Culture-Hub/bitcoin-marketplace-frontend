@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { medusa } from "@/lib/medusa";
 import { useAuth } from "@/context/AuthContext";
+import { listAllStoreProducts } from "@/services/medusa-products";
 import type { CollectionTemplate, CopyState } from "@/components/collection/CollectionRow";
 
 // ─── Map Medusa product variants → CollectionTemplate ────────────────────────
@@ -52,8 +53,7 @@ export function useInventory() {
   return useQuery({
     queryKey: ["inventory", customer?.id],
     queryFn: async () => {
-      const { products } = await medusa.store.product.list({
-        limit: 100,
+      const products = await listAllStoreProducts({
         fields:
           "id,title,handle,collection.*,metadata,variants.*,variants.prices.*",
       });

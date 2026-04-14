@@ -41,7 +41,7 @@ const TemplateGrid = ({
 
   // ── Live data from Medusa ─────────────────────────────────────────────
   const { data: allTemplates = [], isLoading, isError } = useTemplates({
-    limit: 100,
+    fetchAll: true,
     availableOnly,
   });
 

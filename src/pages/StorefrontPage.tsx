@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Store, ArrowLeft } from "lucide-react";
 import { getVendorBySlug, type VendorRecord } from "@/services/store.api";
 import { getCardImages } from "@/services/cardImageLookup";
-import { medusa } from "@/lib/medusa";
+import { listAllStoreProducts } from "@/services/medusa-products";
 import type { CardTemplate } from "@/hooks/medusa/useTemplates";
 import {
   Select,
@@ -116,8 +116,7 @@ const StorefrontPage = () => {
   const { data: allTemplates = [], isLoading: productsLoading } = useQuery({
     queryKey: ["storefront-products", sellerId],
     queryFn: async () => {
-      const { products } = await medusa.store.product.list({
-        limit: 100,
+      const products = await listAllStoreProducts({
         fields:
           "id,title,handle,thumbnail,collection.*,metadata,variants.*,variants.prices.*",
       });
