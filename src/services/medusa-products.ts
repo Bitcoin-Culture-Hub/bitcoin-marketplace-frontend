@@ -7,10 +7,10 @@ export async function listAllStoreProducts(
   batchSize = 100
 ) {
   const allProducts: any[] = []
+  const seenProductIds = new Set<string>()
   let offset = 0
-  let total = Number.POSITIVE_INFINITY
 
-  while (allProducts.length < total) {
+  while (true) {
     const { products, count } = await medusa.store.product.list({
       ...params,
       limit: batchSize,
@@ -18,14 +18,33 @@ export async function listAllStoreProducts(
     })
 
     const items = (products as any[]) ?? []
-    total = typeof count === "number" ? count : items.length
 
     if (items.length === 0) {
       break
     }
 
-    allProducts.push(...items)
+    const newItems = items.filter((item) => {
+      const productId = typeof item?.id === "string" ? item.id : null
+      if (!productId) {
+        return true
+      }
+      if (seenProductIds.has(productId)) {
+        return false
+      }
+      seenProductIds.add(productId)
+      return true
+    })
+
+    if (newItems.length === 0) {
+      break
+    }
+
+    allProducts.push(...newItems)
     offset += items.length
+
+    if (typeof count === "number" && allProducts.length >= count) {
+      break
+    }
 
     if (items.length < batchSize) {
       break
