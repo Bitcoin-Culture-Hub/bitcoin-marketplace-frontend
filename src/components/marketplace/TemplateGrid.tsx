@@ -43,6 +43,7 @@ const TemplateGrid = ({
   const { data: allTemplates = [], isLoading, isError } = useTemplates({
     limit: 100,
     availableOnly,
+    fetchAll: true,
   });
 
   // Build filter chips

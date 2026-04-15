@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { medusa } from "@/lib/medusa"
+import { listAllStoreProducts } from "@/lib/listAllStoreProducts"
 import { getCardImages } from "@/services/cardImageLookup"
 
 // ─── Types matching your TemplateTileProps exactly ────────────────────────────
@@ -106,13 +107,14 @@ type UseTemplatesOptions = {
   limit?: number
   collectionId?: string   // maps to your "series" filter
   availableOnly?: boolean
+  fetchAll?: boolean
 }
 
 export function useTemplates(options: UseTemplatesOptions = {}) {
-  const { limit = 50, collectionId, availableOnly } = options
+  const { limit = 50, collectionId, availableOnly, fetchAll = false } = options
 
   return useQuery({
-    queryKey: ["templates", limit, collectionId, availableOnly],
+    queryKey: ["templates", limit, collectionId, availableOnly, fetchAll],
     queryFn: async () => {
       const params: Record<string, unknown> = {
         limit,
@@ -121,7 +123,10 @@ export function useTemplates(options: UseTemplatesOptions = {}) {
       }
       if (collectionId) params["collection_id[]"] = collectionId
 
-      const { products } = await medusa.store.product.list(params)
+      const products = fetchAll
+        ? await listAllStoreProducts(params)
+        : (await medusa.store.product.list(params)).products
+
       let templates = (products as any[]).map(toCardTemplate)
 
       if (availableOnly) {
