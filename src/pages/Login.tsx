@@ -117,14 +117,6 @@ const Login = () => {
     navigate("/verify");
   };
 
-  const handleResendCode = async () => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    toast({
-      title: "Code sent",
-      description: "Check your email for the new code.",
-    });
-  };
-
   const isCreate = activeTab === "create";
   const heading = isCreate ? "Create account" : "Welcome back";
   const subheading = isCreate
@@ -467,7 +459,6 @@ const Login = () => {
                 email={email}
                 onVerified={handleVerificationComplete}
                 onChangeEmail={() => setStep("form")}
-                onResend={handleResendCode}
               />
             )}
 

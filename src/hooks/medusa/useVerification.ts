@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { medusa } from "@/lib/medusa";
 import { createVendor } from "@/services/store.api";
+import { useAuth } from "@/context/AuthContext";
 
 export type VerificationPayload = {
   // Address step
@@ -38,6 +39,7 @@ function toSlug(name: string): string {
  */
 export function useVerification() {
   const queryClient = useQueryClient();
+  const { refreshCustomer } = useAuth();
 
   return useMutation({
     mutationFn: async (data: VerificationPayload) => {
@@ -77,6 +79,7 @@ export function useVerification() {
     onSuccess: () => {
       // Bust the customer cache so Header/ProtectedRoute see updated metadata
       queryClient.invalidateQueries({ queryKey: ["customer"] });
+      void refreshCustomer();
     },
   });
 }

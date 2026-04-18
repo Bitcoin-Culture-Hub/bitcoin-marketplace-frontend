@@ -2,27 +2,38 @@ import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Loader2, ArrowLeft } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import {
+  isCustomerEmailVerified,
+  useEmailVerificationActions,
+} from "@/hooks/medusa/useEmailVerification";
 
 interface EmailVerificationProps {
   email: string;
   onVerified: () => void;
   onChangeEmail: () => void;
-  onResend: () => Promise<void>;
 }
 
 const EmailVerification = ({
   email,
   onVerified,
   onChangeEmail,
-  onResend,
 }: EmailVerificationProps) => {
+  const { customer } = useAuth();
+  const { verifyCode, resendCode } = useEmailVerificationActions();
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendTimer, setResendTimer] = useState(30);
   const [error, setError] = useState("");
-  const [isVerified, setIsVerified] = useState(false);
+  const [isVerified, setIsVerified] = useState(isCustomerEmailVerified(customer));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    if (isCustomerEmailVerified(customer)) {
+      setIsVerified(true);
+    }
+  }, [customer]);
 
   // Resend timer countdown
   useEffect(() => {
@@ -76,28 +87,32 @@ const EmailVerification = ({
     setIsVerifying(true);
     setError("");
 
-    // Simulate verification - replace with actual API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Mock: accept any 6-digit code for demo
-    if (codeString === "123456" || codeString.length === 6) {
+    try {
+      await verifyCode(codeString);
       setIsVerified(true);
-    } else {
-      setError("Invalid code. Please try again.");
+    } catch (err: any) {
+      setError(err?.message || "Invalid code. Please try again.");
       setCode(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
+    } finally {
+      setIsVerifying(false);
     }
-
-    setIsVerifying(false);
   };
 
   const handleResend = async () => {
     setIsResending(true);
-    await onResend();
-    setIsResending(false);
-    setResendTimer(30);
-    setCode(["", "", "", "", "", ""]);
-    inputRefs.current[0]?.focus();
+    setError("");
+
+    try {
+      await resendCode();
+      setResendTimer(30);
+      setCode(["", "", "", "", "", ""]);
+      inputRefs.current[0]?.focus();
+    } catch (err: any) {
+      setError(err?.message || "Could not resend the code.");
+    } finally {
+      setIsResending(false);
+    }
   };
 
   // Verified success state
