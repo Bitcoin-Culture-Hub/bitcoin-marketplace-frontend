@@ -19,6 +19,10 @@ export type CardTemplate = {
   isNewSupply: boolean
   isLowPop: boolean
   newestSupplyAt: Date | null
+  /** Grade of the floor (lowest-priced available) copy, e.g. "9.5" */
+  floorGrade: string | null
+  /** Grading company of the floor copy, e.g. "PSA" */
+  floorGradingCompany: string | null
 }
 
 // ─── Medusa product → your CardTemplate shape ─────────────────────────────────
@@ -33,10 +37,27 @@ function toCardTemplate(product: any): CardTemplate {
       vm.is_sold === true || vm.sold === true || vm.state === "sold"
     return (v.inventory_quantity ?? 0) > 0 && !sold
   })
-  const prices = availableVariants
-    .map((v) => v.metadata?.price_btc as number | undefined)
-    .filter((p): p is number => typeof p === "number")
-  const floorPriceBTC = prices.length > 0 ? Math.min(...prices) : null
+  const pricedVariants = availableVariants
+    .map((v) => ({
+      variant: v,
+      price: v.metadata?.price_btc as number | undefined,
+    }))
+    .filter((x): x is { variant: any; price: number } => typeof x.price === "number")
+
+  const floorPriceBTC =
+    pricedVariants.length > 0
+      ? Math.min(...pricedVariants.map((x) => x.price))
+      : null
+
+  const floorVariant =
+    floorPriceBTC !== null
+      ? pricedVariants.find((x) => x.price === floorPriceBTC)?.variant
+      : availableVariants[0]
+
+  const floorGrade =
+    (floorVariant?.metadata?.grade as string | undefined) ?? null
+  const floorGradingCompany =
+    (floorVariant?.metadata?.grading_company as string | undefined) ?? null
 
   const availableCount = availableVariants.length
 
@@ -97,6 +118,8 @@ function toCardTemplate(product: any): CardTemplate {
     isNewSupply,
     isLowPop,
     newestSupplyAt: newestVariantDate,
+    floorGrade,
+    floorGradingCompany,
   }
 }
 

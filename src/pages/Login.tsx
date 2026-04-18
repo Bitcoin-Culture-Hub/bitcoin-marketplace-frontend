@@ -5,15 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, Eye, EyeOff, Loader2, Shield, Award, Lock } from "lucide-react";
+import { CheckCircle, Eye, EyeOff, Loader2, Mail, Lock } from "lucide-react";
 import EmailVerification from "@/components/auth/EmailVerification";
 import ForgotPassword from "@/components/auth/ForgotPassword";
-import WalletConnection from "@/components/auth/WalletConnection";
-import AccountUnlocks from "@/components/auth/AccountUnlocks";
-import Header from "@/components/layout/Header";
+import loginGradient from "@/assets/login-gradient.webp";
 
 type AuthTab = "login" | "create";
 type AuthStep = "form" | "verify" | "forgot";
+
+const GoogleIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+    <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+    <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.997 8.997 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+  </svg>
+);
 
 const Login = () => {
   const navigate = useNavigate();
@@ -21,33 +28,28 @@ const Login = () => {
   const { toast } = useToast();
   const from = (location.state as any)?.from || "/inventory";
   const { login, register } = useAuth();
-  const [activeTab, setActiveTab] = useState<AuthTab>("create"); // Default to create for new users
+  const [activeTab, setActiveTab] = useState<AuthTab>("create");
   const [step, setStep] = useState<AuthStep>("form");
-  
-  // Form state
+
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Validation state
+
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [generalError, setGeneralError] = useState("");
 
-  // Password validation
   const passwordValid = password.length >= 8;
-  
-  // Email validation
+
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  // Form validation
   const isLoginValid = email && password && validateEmail(email);
   const isCreateValid = email && password && passwordValid && agreedToTerms && validateEmail(email);
 
@@ -116,7 +118,6 @@ const Login = () => {
   };
 
   const handleResendCode = async () => {
-    // Simulate resend - replace with actual API call
     await new Promise((resolve) => setTimeout(resolve, 500));
     toast({
       title: "Code sent",
@@ -124,386 +125,359 @@ const Login = () => {
     });
   };
 
-  const trustPoints = [
-    { icon: Award, label: "Graded cards only" },
-    { icon: Lock, label: "Escrow-backed offers" },
-    { icon: Shield, label: "Verified storefronts for sellers" },
-  ];
+  const isCreate = activeTab === "create";
+  const heading = isCreate ? "Create account" : "Welcome back";
+  const subheading = isCreate
+    ? "Please enter your details to login"
+    : "Enter your credentials to continue";
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Header variant="light" />
-      <div className="flex-1 flex flex-col lg:flex-row">
-      {/* Left Panel - Identity & Invitation (60%) */}
-      <div className="w-full lg:w-[60%] flex flex-col justify-center px-8 py-16 lg:py-0 lg:px-16 xl:px-24">
-        <div className="max-w-lg">
-          {/* Eyebrow */}
-          <span className="text-[11px] text-muted-foreground font-sans uppercase tracking-[0.2em] font-light">
-            Bitcoin Trading Cards
-          </span>
+    <div className="min-h-screen bg-white flex flex-col lg:flex-row">
+      {/* Left Panel — Full-height gradient + headline */}
+      <div className="w-full lg:w-1/2 p-3 lg:p-4">
+        <div className="relative w-full h-full min-h-[280px] flex flex-col justify-end overflow-hidden rounded-2xl lg:rounded-3xl">
+        <img
+          src={loginGradient}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover animate-drift pointer-events-none"
+        />
 
-          {/* Primary headline */}
-          <h1 className="text-3xl lg:text-[2.5rem] font-display font-normal leading-[1.2] mt-8 mb-6 text-foreground">
-            Your collector identity, verified.
-          </h1>
-
-          {/* Subhead */}
-          <p className="text-muted-foreground text-base leading-relaxed mb-12">
-            Catalog your collection. List graded cards. Trade with escrow-backed certainty.
-          </p>
-
-          {/* Trust signals */}
-          <div className="space-y-3.5 mb-12">
-            {trustPoints.map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-3">
-                <Icon className="h-4 w-4 text-muted-foreground/70 flex-shrink-0" strokeWidth={1.5} />
-                <span className="text-sm text-muted-foreground font-light">{label}</span>
-              </div>
-            ))}
+        <div className="relative z-10 p-8 lg:p-12 xl:p-16 mt-auto">
+          <div className="w-11 h-11 rounded-xl border-[2.5px] border-white flex items-center justify-center mb-6">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+              <path d="M12 0Q12.5 10.5 24 12Q12.5 13.5 12 24Q11.5 13.5 0 12Q11.5 10.5 12 0Z" />
+            </svg>
           </div>
-
+          <h2 className="text-white text-[1.75rem] lg:text-[2.25rem] xl:text-[3.8rem] font-bold leading-[1.15] mb-3">
+            A private registry<br />
+            for graded Bitcoin<br />
+            trading cards
+          </h2>
+          <p className="text-white/80 text-sm lg:text-base leading-relaxed">
+            Catalog your collection, verify listings, trade with confidence.
+          </p>
+        </div>
         </div>
       </div>
 
-      {/* Right Panel - Authentication Card (40%) */}
-      <div className="w-full lg:w-[40%] flex items-center justify-center px-8 py-16 lg:py-0 lg:px-12 xl:px-16 bg-muted/30 border-t lg:border-t-0 lg:border-l border-border">
-        <div className="w-full max-w-sm">
-          {/* Auth Card */}
-          <div className="bg-card border border-border shadow-sm">
+      {/* Right Panel — Auth Form on white */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-6 sm:px-10 lg:px-12 xl:px-16 py-10 lg:py-8">
+        <div className="w-full max-w-[400px]">
             {step === "form" && (
               <>
-                {/* Tab switcher */}
-                <div className="flex border-b border-border">
-                  <button
-                    onClick={() => {
-                      setActiveTab("login");
-                      setGeneralError("");
-                    }}
-                    className={`flex-1 py-4 text-[11px] uppercase tracking-[0.15em] transition-colors relative ${
-                      activeTab === "login"
-                        ? "text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    Log In
-                    {activeTab === "login" && (
-                      <span className="absolute bottom-0 left-4 right-4 h-px bg-foreground" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setActiveTab("create");
-                      setGeneralError("");
-                    }}
-                    className={`flex-1 py-4 text-[11px] uppercase tracking-[0.15em] transition-colors border-l border-border relative ${
-                      activeTab === "create"
-                        ? "text-foreground font-medium"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    Create Account
-                    {activeTab === "create" && (
-                      <span className="absolute bottom-0 left-4 right-4 h-px bg-primary" />
-                    )}
-                  </button>
+                {/* Avatar */}
+                <div className="flex justify-center mb-5">
+                  <div className="w-12 h-12 rounded-full bg-[#f5f5f5] border border-gray-200 flex items-center justify-center">
+                    <span className="text-lg font-semibold text-gray-500">
+                      {email ? email[0].toUpperCase() : "A"}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Form Content */}
-                <div className="p-8">
-                  {activeTab === "login" ? (
-                    <form onSubmit={handleLogin} className="space-y-6">
-                      <div className="space-y-5">
-                        {/* Email */}
-                        <div>
-                          <label className="text-[10px] text-muted-foreground uppercase tracking-[0.12em] block mb-2.5 font-light">
-                            Email
-                          </label>
-                          <Input
-                            type="email"
-                            value={email}
-                            onChange={(e) => {
-                              setEmail(e.target.value);
-                              setEmailError("");
-                              setGeneralError("");
-                            }}
-                            className={`bg-background border-border h-11 focus:border-foreground focus:ring-0 rounded-none text-sm ${
-                              emailError ? "border-destructive" : ""
-                            }`}
-                            placeholder="you@example.com"
-                            required
-                          />
-                          {emailError && (
-                            <p className="text-xs text-destructive mt-1.5">{emailError}</p>
-                          )}
-                        </div>
+                {/* Heading */}
+                <h1 className="text-center text-4xl font-bold text-gray-900 mb-1">
+                  {heading}
+                </h1>
+                <p className="text-center text-sl text-gray-500 mb-8">
+                  {subheading}
+                </p>
 
-                        {/* Password */}
-                        <div>
-                          <label className="text-[10px] text-muted-foreground uppercase tracking-[0.12em] block mb-2.5 font-light">
-                            Password
-                          </label>
-                          <div className="relative">
-                            <Input
-                              type={showPassword ? "text" : "password"}
-                              value={password}
-                              onChange={(e) => {
-                                setPassword(e.target.value);
-                                setPasswordError("");
-                                setGeneralError("");
-                              }}
-                              className="bg-background border-border h-11 focus:border-foreground focus:ring-0 rounded-none text-sm pr-10"
-                              placeholder="••••••••"
-                              required
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                              {showPassword ? (
-                                <EyeOff className="h-4 w-4" strokeWidth={1.5} />
-                              ) : (
-                                <Eye className="h-4 w-4" strokeWidth={1.5} />
-                              )}
-                            </button>
-                          </div>
-                        </div>
+                {isCreate ? (
+                  <form onSubmit={handleCreate} className="space-y-5">
+                    {/* Email */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-600 block mb-1.5">
+                        Email
+                      </label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" strokeWidth={1.5} />
+                        <Input
+                          type="email"
+                          value={email}
+                          onChange={(e) => {
+                            setEmail(e.target.value);
+                            setEmailError("");
+                            setGeneralError("");
+                          }}
+                          className={`pl-10 h-11 rounded-xl border-gray-200 bg-white text-sm focus:border-btc-orange focus:ring-btc-orange/20 ${
+                            emailError ? "border-destructive" : ""
+                          }`}
+                          placeholder="Enter your email"
+                          required
+                        />
                       </div>
-
-                      {/* General Error */}
-                      {generalError && (
-                        <p className="text-xs text-destructive text-center bg-destructive/10 py-2 px-3 border border-destructive/20">
-                          {generalError}
-                        </p>
+                      {emailError && (
+                        <p className="text-xs text-destructive mt-1.5">{emailError}</p>
                       )}
+                    </div>
 
-                      <Button
-                        type="submit"
-                        disabled={isLoading || !isLoginValid}
-                        className="w-full h-11 bg-foreground hover:bg-foreground/90 text-background font-display font-medium text-xs uppercase tracking-[0.15em] rounded-none"
-                      >
-                        {isLoading ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          "Log In"
-                        )}
-                      </Button>
-
-                      <div className="flex items-center justify-between pt-1">
+                    {/* Password */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-600 block mb-1.5">
+                        Password
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" strokeWidth={1.5} />
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => {
+                            setPassword(e.target.value);
+                            setPasswordError("");
+                            setGeneralError("");
+                          }}
+                          onFocus={() => setPasswordFocused(true)}
+                          onBlur={() => setPasswordFocused(false)}
+                          className={`pl-10 pr-10 h-11 rounded-xl border-gray-200 bg-white text-sm focus:border-btc-orange focus:ring-btc-orange/20 ${
+                            passwordError ? "border-destructive" : ""
+                          }`}
+                          placeholder="Enter your password"
+                          required
+                        />
                         <button
                           type="button"
-                          onClick={() => setStep("forgot")}
-                          className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-light"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                         >
-                          Forgot password?
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setActiveTab("create")}
-                          className="text-[11px] text-muted-foreground hover:text-foreground transition-colors font-light"
-                        >
-                          Create account
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" strokeWidth={1.5} />
+                          ) : (
+                            <Eye className="h-4 w-4" strokeWidth={1.5} />
+                          )}
                         </button>
                       </div>
-                    </form>
-                  ) : (
-                    <form onSubmit={handleCreate} className="space-y-6">
-                      <div className="space-y-5">
-                        {/* Email */}
-                        <div>
-                          <label className="text-[10px] text-muted-foreground uppercase tracking-[0.12em] block mb-2.5 font-light">
-                            Email
-                          </label>
-                          <Input
-                            type="email"
-                            value={email}
-                            onChange={(e) => {
-                              setEmail(e.target.value);
-                              setEmailError("");
-                              setGeneralError("");
-                            }}
-                            className={`bg-background border-border h-11 focus:border-foreground focus:ring-0 rounded-none text-sm ${
-                              emailError ? "border-destructive" : ""
-                            }`}
-                            placeholder="you@example.com"
-                            required
+                      {(passwordFocused || password.length > 0) && (
+                        <div className="mt-2 flex items-center gap-2">
+                          <CheckCircle
+                            className={`h-3 w-3 ${passwordValid ? "text-green-500" : "text-gray-300"}`}
+                            strokeWidth={2}
                           />
-                          {emailError && (
-                            <p className="text-xs text-destructive mt-1.5">{emailError}</p>
-                          )}
+                          <span className={`text-[11px] ${passwordValid ? "text-green-600" : "text-gray-400"}`}>
+                            8+ characters
+                          </span>
                         </div>
-
-                        {/* Username (optional) */}
-                        <div>
-                          <label className="text-[10px] text-muted-foreground uppercase tracking-[0.12em] block mb-2.5 font-light">
-                            Username
-                            <span className="text-muted-foreground/50 ml-1.5 normal-case tracking-normal">(optional)</span>
-                          </label>
-                          <Input
-                            type="text"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
-                            className="bg-background border-border h-11 focus:border-foreground focus:ring-0 rounded-none text-sm"
-                            placeholder="satoshi"
-                            maxLength={20}
-                          />
-                        </div>
-
-                        {/* Password */}
-                        <div>
-                          <label className="text-[10px] text-muted-foreground uppercase tracking-[0.12em] block mb-2.5 font-light">
-                            Password
-                          </label>
-                          <div className="relative">
-                            <Input
-                              type={showPassword ? "text" : "password"}
-                              value={password}
-                              onChange={(e) => {
-                                setPassword(e.target.value);
-                                setPasswordError("");
-                                setGeneralError("");
-                              }}
-                              onFocus={() => setPasswordFocused(true)}
-                              onBlur={() => setPasswordFocused(false)}
-                              className={`bg-background border-border h-11 focus:border-foreground focus:ring-0 rounded-none text-sm pr-10 ${
-                                passwordError ? "border-destructive" : ""
-                              }`}
-                              placeholder="••••••••"
-                              required
-                            />
-                            <button
-                              type="button"
-                              onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                              {showPassword ? (
-                                <EyeOff className="h-4 w-4" strokeWidth={1.5} />
-                              ) : (
-                                <Eye className="h-4 w-4" strokeWidth={1.5} />
-                              )}
-                            </button>
-                          </div>
-                          {/* Password requirements - show on focus */}
-                          {(passwordFocused || password.length > 0) && (
-                            <div className="mt-2 flex items-center gap-2">
-                              <CheckCircle
-                                className={`h-3 w-3 ${
-                                  passwordValid ? "text-accent" : "text-muted-foreground/40"
-                                }`}
-                                strokeWidth={2}
-                              />
-                              <span
-                                className={`text-[10px] ${
-                                  passwordValid ? "text-accent" : "text-muted-foreground"
-                                }`}
-                              >
-                                8+ characters
-                              </span>
-                            </div>
-                          )}
-                          {passwordError && (
-                            <p className="text-xs text-destructive mt-1.5">{passwordError}</p>
-                          )}
-                        </div>
-
-                        {/* Terms checkbox */}
-                        <div>
-                          <label className="flex items-start gap-3 cursor-pointer group">
-                            <Checkbox
-                              checked={agreedToTerms}
-                              onCheckedChange={(checked) => {
-                                setAgreedToTerms(checked === true);
-                                setGeneralError("");
-                              }}
-                              className="mt-0.5 h-4 w-4 rounded-none border-border data-[state=checked]:bg-foreground data-[state=checked]:border-foreground"
-                            />
-                            <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors leading-relaxed">
-                              I agree to the{" "}
-                              <Link
-                                to="/terms"
-                                className="underline underline-offset-2 hover:text-foreground"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                Terms
-                              </Link>
-                              {" & "}
-                              <Link
-                                to="/privacy"
-                                className="underline underline-offset-2 hover:text-foreground"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                Privacy
-                              </Link>
-                            </span>
-                          </label>
-                        </div>
-                      </div>
-
-                      {/* General Error */}
-                      {generalError && (
-                        <p className="text-xs text-destructive text-center bg-destructive/10 py-2 px-3 border border-destructive/20">
-                          {generalError}
-                        </p>
                       )}
+                      {passwordError && (
+                        <p className="text-xs text-destructive mt-1.5">{passwordError}</p>
+                      )}
+                    </div>
 
-                      <Button
-                        type="submit"
-                        disabled={isLoading || !isCreateValid}
-                        className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-display font-medium text-xs uppercase tracking-[0.15em] rounded-none"
-                      >
-                        {isLoading ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          "Create Account"
-                        )}
-                      </Button>
+                    {/* Terms */}
+                    <label className="flex items-start gap-2.5 cursor-pointer group">
+                      <Checkbox
+                        checked={agreedToTerms}
+                        onCheckedChange={(checked) => {
+                          setAgreedToTerms(checked === true);
+                          setGeneralError("");
+                        }}
+                        className="mt-0.5 h-4 w-4 rounded border-gray-300 data-[state=checked]:bg-btc-orange data-[state=checked]:border-btc-orange"
+                      />
+                      <span className="text-xs text-gray-500 leading-relaxed">
+                        I agree to the{" "}
+                        <Link to="/terms" className="text-btc-orange hover:underline" onClick={(e) => e.stopPropagation()}>
+                          Terms
+                        </Link>
+                        {" & "}
+                        <Link to="/privacy" className="text-btc-orange hover:underline" onClick={(e) => e.stopPropagation()}>
+                          Privacy
+                        </Link>
+                      </span>
+                    </label>
 
-                      <p className="text-[11px] text-center text-muted-foreground font-light pt-1">
-                        Already have an account?{" "}
-                        <button
-                          type="button"
-                          onClick={() => setActiveTab("login")}
-                          className="underline underline-offset-2 hover:text-foreground transition-colors"
-                        >
-                          Log in
-                        </button>
+                    {generalError && (
+                      <p className="text-xs text-destructive text-center bg-destructive/10 py-2 px-3 rounded-lg">
+                        {generalError}
                       </p>
-                    </form>
-                  )}
-                </div>
+                    )}
+
+                    <Button
+                      type="submit"
+                      disabled={isLoading || !isCreateValid}
+                      className="w-full h-11 bg-btc-orange hover:bg-btc-orange/90 text-white font-semibold text-sm rounded-xl"
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Create account"
+                      )}
+                    </Button>
+
+                    {/* Divider */}
+                    <div className="relative my-2">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-200" />
+                      </div>
+                      <div className="relative flex justify-center">
+                        <span className="bg-white px-3 text-xs text-gray-400">Or</span>
+                      </div>
+                    </div>
+
+                    {/* Google */}
+                    <button
+                      type="button"
+                      className="w-full h-11 flex items-center justify-center gap-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <GoogleIcon />
+                      Continue with Google
+                    </button>
+
+                    <p className="text-sm text-center text-gray-500 pt-2">
+                      Already have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab("login");
+                          setGeneralError("");
+                        }}
+                        className="text-btc-orange font-semibold border border-btc-orange rounded-full px-3 py-0.5 text-xs hover:bg-btc-orange/5 transition-colors"
+                      >
+                        Login
+                      </button>
+                    </p>
+                  </form>
+                ) : (
+                  <form onSubmit={handleLogin} className="space-y-5">
+                    {/* Email */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-600 block mb-1.5">
+                        Email
+                      </label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" strokeWidth={1.5} />
+                        <Input
+                          type="email"
+                          value={email}
+                          onChange={(e) => {
+                            setEmail(e.target.value);
+                            setEmailError("");
+                            setGeneralError("");
+                          }}
+                          className={`pl-10 h-11 rounded-xl border-gray-200 bg-white text-sm focus:border-btc-orange focus:ring-btc-orange/20 ${
+                            emailError ? "border-destructive" : ""
+                          }`}
+                          placeholder="Enter your email"
+                          required
+                        />
+                      </div>
+                      {emailError && (
+                        <p className="text-xs text-destructive mt-1.5">{emailError}</p>
+                      )}
+                    </div>
+
+                    {/* Password */}
+                    <div>
+                      <label className="text-xs font-medium text-gray-600 block mb-1.5">
+                        Password
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" strokeWidth={1.5} />
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          value={password}
+                          onChange={(e) => {
+                            setPassword(e.target.value);
+                            setPasswordError("");
+                            setGeneralError("");
+                          }}
+                          className="pl-10 pr-10 h-11 rounded-xl border-gray-200 bg-white text-sm focus:border-btc-orange focus:ring-btc-orange/20"
+                          placeholder="Enter your password"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" strokeWidth={1.5} />
+                          ) : (
+                            <Eye className="h-4 w-4" strokeWidth={1.5} />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {generalError && (
+                      <p className="text-xs text-destructive text-center bg-destructive/10 py-2 px-3 rounded-xl">
+                        {generalError}
+                      </p>
+                    )}
+
+                    <Button
+                      type="submit"
+                      disabled={isLoading || !isLoginValid}
+                      className="w-full h-11 bg-btc-orange hover:bg-btc-orange/90 text-white font-semibold text-sm rounded-xl"
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Log in"
+                      )}
+                    </Button>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setStep("forgot")}
+                        className="text-xs text-gray-500 hover:text-gray-700 transition-"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="relative my-2">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-200" />
+                      </div>
+                      <div className="relative flex justify-center">
+                        <span className="bg-white px-3 text-xs text-gray-400">Or</span>
+                      </div>
+                    </div>
+
+                    {/* Google */}
+                    <button
+                      type="button"
+                      className="w-full h-11 flex items-center justify-center gap-2.5 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <GoogleIcon />
+                      Continue with Google
+                    </button>
+
+                    <p className="text-sm text-center text-gray-500 pt-2">
+                      Don't have an account?{" "}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveTab("create");
+                          setGeneralError("");
+                        }}
+                        className="text-btc-orange font-semibold border border-btc-orange rounded-full px-3 py-0.5 text-xs hover:bg-btc-orange/5 transition-colors"
+                      >
+                        Sign up
+                      </button>
+                    </p>
+                  </form>
+                )}
               </>
             )}
 
             {step === "verify" && (
-              <div className="p-8">
-                <EmailVerification
-                  email={email}
-                  onVerified={handleVerificationComplete}
-                  onChangeEmail={() => setStep("form")}
-                  onResend={handleResendCode}
-                />
-              </div>
+              <EmailVerification
+                email={email}
+                onVerified={handleVerificationComplete}
+                onChangeEmail={() => setStep("form")}
+                onResend={handleResendCode}
+              />
             )}
 
             {step === "forgot" && (
-              <div className="p-8">
-                <ForgotPassword
-                  onBack={() => setStep("form")}
-                  onSuccess={() => setStep("form")}
-                />
-              </div>
+              <ForgotPassword
+                onBack={() => setStep("form")}
+                onSuccess={() => setStep("form")}
+              />
             )}
-          </div>
-
-
-          {/* Account unlocks section */}
-          {step === "form" && activeTab === "create" && (
-            <div className="mt-5">
-              <AccountUnlocks />
-            </div>
-          )}
         </div>
-      </div>
       </div>
     </div>
   );

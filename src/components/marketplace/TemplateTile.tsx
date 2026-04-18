@@ -14,6 +14,10 @@ interface TemplateTileProps {
   offersAcceptedCount: number;
   isNewSupply?: boolean;
   isLowPop?: boolean;
+  /** Grade of the floor (lowest-priced available) copy, e.g. "9.5" */
+  floorGrade?: string | null;
+  /** Grading company of the floor copy, e.g. "PSA" */
+  floorGradingCompany?: string | null;
   /** When set, the detail page will filter listings to this seller only */
   sellerFilter?: string;
 }
@@ -30,8 +34,19 @@ const TemplateTile = ({
   offersAcceptedCount,
   isNewSupply,
   isLowPop,
+  floorGrade,
+  floorGradingCompany,
   sellerFilter,
 }: TemplateTileProps) => {
+  const gradeLabel =
+    floorGrade && floorGradingCompany
+      ? `${floorGradingCompany} - ${floorGrade}`
+      : floorGrade
+      ? floorGrade
+      : floorGradingCompany
+      ? floorGradingCompany
+      : null;
+
   const navigate = useNavigate();
   const [isFavorited, setIsFavorited] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -126,16 +141,23 @@ const TemplateTile = ({
         <div className="border-t border-[rgba(175,175,175,0.2)]" />
 
         {/* Category Line */}
-        <div className="flex items-center gap-0.5">
-          <span className="text-[12px] text-[rgba(18,18,18,0.6)] tracking-[0.014em]">
-            {series}
-          </span>
-          <span className="text-[12px] text-[rgba(18,18,18,0.6)] tracking-[0.014em]">
-            &middot;
-          </span>
-          <span className="text-[12px] text-[rgba(18,18,18,0.6)] tracking-[0.014em]">
-            {cardNumber}
-          </span>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-0.5 min-w-0">
+            <span className="text-[12px] text-[rgba(18,18,18,0.6)] tracking-[0.014em] truncate">
+              {series}
+            </span>
+            <span className="text-[12px] text-[rgba(18,18,18,0.6)] tracking-[0.014em]">
+              &middot;
+            </span>
+            <span className="text-[12px] text-[rgba(18,18,18,0.6)] tracking-[0.014em]">
+              {cardNumber}
+            </span>
+          </div>
+          {gradeLabel && (
+            <span className="shrink-0 inline-flex items-center h-6 px-2 rounded-md border border-gray-200 text-[11px] font-semibold text-gray-700">
+              {gradeLabel}
+            </span>
+          )}
         </div>
 
         {/* Divider */}

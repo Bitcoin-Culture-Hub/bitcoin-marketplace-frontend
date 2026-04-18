@@ -5,7 +5,6 @@ import MarketplaceHero from "@/components/marketplace/MarketplaceHero";
 import TemplateFilterSidebar from "@/components/marketplace/TemplateFilterSidebar";
 import TemplateGrid from "@/components/marketplace/TemplateGrid";
 import TrendingCollectors from "@/components/marketplace/TrendingCollectors";
-import TopSellers from "@/components/marketplace/TopSellers";
 import CreateAndSell from "@/components/marketplace/CreateAndSell";
 
 const Marketplace = () => {
@@ -85,7 +84,6 @@ const Marketplace = () => {
 
       {/* Bottom Sections */}
       <TrendingCollectors />
-      <TopSellers />
       <CreateAndSell />
       <Footer variant="marketplace" />
     </div>

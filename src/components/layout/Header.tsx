@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
-import { ShoppingBag, UserCircle, Wallet } from "lucide-react";
+import { Bell, Search, ShoppingBag, UserCircle } from "lucide-react";
 
 interface HeaderProps {
   variant?: "light" | "dark";
@@ -27,10 +27,9 @@ const Header = ({ variant = "dark" }: HeaderProps) => {
 
   if (variant === "light") {
     const lightNavLinks = [
-      { href: "/homepage", label: "Home" },
-      { href: "/inventory", label: "Inventory" },
       { href: "/marketplace", label: "Marketplace" },
       { href: "/storefronts", label: "Storefronts" },
+      {href: "/inventory", label: "Inventory"},
     ];
 
     return (
@@ -39,19 +38,19 @@ const Header = ({ variant = "dark" }: HeaderProps) => {
           {/* Logo */}
           <Link
             to="/homepage"
-            className="font-['Inter'] font-black text-[24px] text-[#121212] tracking-[0.014em]"
+            className="font-['Inter'] font-black text-[24px] text-[#121212] tracking-[0.014em] shrink-0"
           >
             LOGO
           </Link>
 
           {/* Center Navigation */}
-          <nav className="flex items-center gap-[13px]">
+          <nav className="hidden md:flex items-center gap-[13px]">
             {lightNavLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}
                 className={`font-['Inter'] font-normal text-[16px] text-[#121212] p-[10px] transition-colors ${
-                  isActive(link.href) ? "font-medium" : "hover:opacity-70"
+                  isActive(link.href) ? "opacity-100" : "opacity-60 hover:opacity-100"
                 }`}
               >
                 {link.label}
@@ -59,25 +58,17 @@ const Header = ({ variant = "dark" }: HeaderProps) => {
             ))}
           </nav>
 
-          {/* Right Side */}
-          {isHomepage && !customer ? (
-            <div className="flex items-center gap-6">
-              <Link
-                to="/login"
-                className="flex items-center gap-2 font-['Inter'] font-normal text-[16px] text-[#121212] transition-colors hover:opacity-70"
-              >
-                <UserCircle className="h-5 w-5" strokeWidth={1.5} />
-                Account
-              </Link>
-              <Link
-                to="/login"
-                className="flex items-center gap-2 font-['Inter'] font-normal text-[16px] text-[#121212] transition-colors hover:opacity-70"
-              >
-                <Wallet className="h-5 w-5" strokeWidth={1.5} />
-                Wallet
-              </Link>
+          {/* Search + Right Side */}
+          <div className="flex items-center gap-5">
+            <div className="hidden lg:block relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#121212]/60" strokeWidth={1.5} />
+              <input
+                type="text"
+                placeholder="Search"
+                className="w-[270px] h-9 pl-9 pr-4 bg-transparent border border-[#121212]/60 rounded-full text-sm text-[#121212] placeholder-[#121212]/40 outline-none focus:border-[#121212]/30 transition-colors"
+              />
             </div>
-          ) : customer ? (
+          {customer ? (
             <div className="flex items-center gap-6">
               <Link
                 to="/profile"
@@ -86,15 +77,14 @@ const Header = ({ variant = "dark" }: HeaderProps) => {
                 }`}
               >
                 <UserCircle className="h-5 w-5" strokeWidth={1.5} />
-                Account
               </Link>
-              <Link
-                to="/profile"
-                className="flex items-center gap-2 font-['Inter'] font-normal text-[16px] text-[#121212] transition-colors hover:opacity-70"
+              <button
+                type="button"
+                className="relative text-[#121212] hover:opacity-70 transition-colors p-1"
+                aria-label="Notifications"
               >
-                <Wallet className="h-5 w-5" strokeWidth={1.5} />
-                Wallet
-              </Link>
+                <Bell className="h-5 w-5" strokeWidth={1.5} />
+              </button>
               <button
                 type="button"
                 onClick={() => openDrawer()}
@@ -122,15 +112,14 @@ const Header = ({ variant = "dark" }: HeaderProps) => {
                 className="flex items-center gap-2 font-['Inter'] font-normal text-[16px] text-[#121212] transition-colors hover:opacity-70"
               >
                 <UserCircle className="h-5 w-5" strokeWidth={1.5} />
-                Account
               </Link>
-              <Link
-                to="/login"
-                className="flex items-center gap-2 font-['Inter'] font-normal text-[16px] text-[#121212] transition-colors hover:opacity-70"
+              <button
+                type="button"
+                className="relative text-[#121212] hover:opacity-70 transition-colors p-1"
+                aria-label="Notifications"
               >
-                <Wallet className="h-5 w-5" strokeWidth={1.5} />
-                Wallet
-              </Link>
+                <Bell className="h-5 w-5" strokeWidth={1.5} />
+              </button>
               <button
                 type="button"
                 onClick={() => openDrawer()}
@@ -146,6 +135,7 @@ const Header = ({ variant = "dark" }: HeaderProps) => {
               </button>
             </div>
           )}
+          </div>
         </div>
       </header>
     );
@@ -157,11 +147,20 @@ const Header = ({ variant = "dark" }: HeaderProps) => {
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
-          <Link to="/homepage" className="text-sm font-display font-medium text-background">
+          <Link to="/homepage" className="text-sm font-display font-medium text-background shrink-0">
             Bitcoin Card Market
           </Link>
 
-          {/* Right Navigation */}
+          {/* Search + Right Navigation */}
+          <div className="flex items-center gap-4">
+            <div className="hidden md:block relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-background/40" strokeWidth={1.5} />
+              <input
+                type="text"
+                placeholder="Search"
+                className="w-[18px] h-8 pl-9 pr-4 bg-transparent border border-background/20 rounded-full text-xs text-background placeholder-background/40 outline-none focus:border-background/30 transition-colors"
+              />
+            </div>
           {isHomepage && !customer ? (
             <div className="flex items-center gap-3">
               <Link
@@ -182,7 +181,7 @@ const Header = ({ variant = "dark" }: HeaderProps) => {
                   to={link.href}
                   className={`text-sm transition-colors ${
                     isActive(link.href)
-                      ? "text-background font-medium"
+                      ? "text-background"
                       : "text-background/60 hover:text-background"
                   }`}
                 >
@@ -193,12 +192,19 @@ const Header = ({ variant = "dark" }: HeaderProps) => {
                 to="/profile"
                 className={`text-sm transition-colors ${
                   location.pathname.startsWith("/profile")
-                    ? "text-background font-medium"
+                    ? "text-background"
                     : "text-background/60 hover:text-background"
                 }`}
               >
                 Profile
               </Link>
+              <button
+                type="button"
+                className="relative text-background/60 hover:text-background transition-colors p-1"
+                aria-label="Notifications"
+              >
+                <Bell className="h-5 w-5" strokeWidth={1.5} />
+              </button>
               <button
                 type="button"
                 onClick={() => openDrawer()}
@@ -236,6 +242,13 @@ const Header = ({ variant = "dark" }: HeaderProps) => {
               ))}
               <button
                 type="button"
+                className="relative text-background/60 hover:text-background transition-colors p-1"
+                aria-label="Notifications"
+              >
+                <Bell className="h-5 w-5" strokeWidth={1.5} />
+              </button>
+              <button
+                type="button"
                 onClick={() => openDrawer()}
                 className="relative text-background/60 hover:text-background transition-colors p-1"
                 aria-label="Open cart"
@@ -249,6 +262,7 @@ const Header = ({ variant = "dark" }: HeaderProps) => {
               </button>
             </nav>
           )}
+          </div>
         </div>
       </div>
     </header>

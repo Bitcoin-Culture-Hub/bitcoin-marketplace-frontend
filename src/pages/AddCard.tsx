@@ -115,7 +115,7 @@ const AddCard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header variant="light"/>
 
       <main className="max-w-xl mx-auto px-6 py-8">
         {/* Page Header */}

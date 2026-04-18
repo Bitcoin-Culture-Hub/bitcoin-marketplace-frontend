@@ -122,7 +122,7 @@ const ForgotPassword = ({ onBack, onSuccess }: ForgotPasswordProps) => {
               setEmail(e.target.value);
               setError("");
             }}
-            className={`bg-background border-border h-11 focus:border-foreground focus:ring-0 rounded-none text-sm ${
+            className={`bg-background border-border h-11 focus:border-foreground focus:ring-0 rounded-xl text-sm ${
               error ? "border-destructive" : ""
             }`}
             placeholder="you@example.com"
@@ -135,7 +135,7 @@ const ForgotPassword = ({ onBack, onSuccess }: ForgotPasswordProps) => {
         <Button
           type="submit"
           disabled={isLoading || !email}
-          className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-display font-medium text-xs uppercase tracking-[0.15em] rounded-none"
+          className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-display font-medium text-xs uppercase tracking-[0.15em] rounded-xl"
         >
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />

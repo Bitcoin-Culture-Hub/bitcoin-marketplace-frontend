@@ -30,10 +30,28 @@ function toCardTemplate(product: any): CardTemplate {
     return !sold;
   });
 
-  const prices = availableVariants
-    .map((v) => v.metadata?.price_btc as number | undefined)
-    .filter((p): p is number => typeof p === "number");
-  const floorPriceBTC = prices.length > 0 ? Math.min(...prices) : null;
+  const pricedVariants = availableVariants
+    .map((v) => ({
+      variant: v,
+      price: v.metadata?.price_btc as number | undefined,
+    }))
+    .filter(
+      (x): x is { variant: any; price: number } => typeof x.price === "number"
+    );
+
+  const floorVariant =
+    pricedVariants.length > 0
+      ? pricedVariants.reduce((lo, x) => (x.price < lo.price ? x : lo)).variant
+      : null;
+
+  const floorPriceBTC =
+    pricedVariants.length > 0
+      ? Math.min(...pricedVariants.map((x) => x.price))
+      : null;
+
+  const floorGrade = (floorVariant?.metadata?.grade as string | undefined) ?? null;
+  const floorGradingCompany =
+    (floorVariant?.metadata?.grading_company as string | undefined) ?? null;
 
   const availableCount = availableVariants.length;
 
@@ -82,6 +100,8 @@ function toCardTemplate(product: any): CardTemplate {
     backImage,
     availableCount,
     floorPriceBTC,
+    floorGrade,
+    floorGradingCompany,
     offersAcceptedCount,
     isNewSupply,
     isLowPop,

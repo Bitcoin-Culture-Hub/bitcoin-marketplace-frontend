@@ -41,17 +41,8 @@ const DashboardSidebar = ({ vendorName, vendorEmail }: DashboardSidebarProps) =>
   };
 
   return (
-    <Sidebar className="border-r border-border">
-      <SidebarHeader className="p-4 border-b border-border">
-        <Link to="/dashboard" className="flex items-center gap-2">
-          <Store className="h-5 w-5 text-foreground" />
-          <span className="text-sm font-display font-medium text-foreground truncate">
-            {vendorName || "My Store"}
-          </span>
-        </Link>
-      </SidebarHeader>
-
-      <SidebarContent className="px-2 py-3">
+    <Sidebar className="border-r border-border top-[100px] h-[calc(100svh-100px)]">
+      <SidebarContent className="px-2 py-1">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -76,19 +67,6 @@ const DashboardSidebar = ({ vendorName, vendorEmail }: DashboardSidebarProps) =>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-
-      <SidebarFooter className="p-4 border-t border-border">
-        <div className="space-y-0.5">
-          <p className="text-xs font-medium text-foreground truncate">
-            {vendorName || "My Store"}
-          </p>
-          {vendorEmail && (
-            <p className="text-[10px] text-muted-foreground truncate">
-              {vendorEmail}
-            </p>
-          )}
-        </div>
-      </SidebarFooter>
     </Sidebar>
   );
 };

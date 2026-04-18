@@ -34,6 +34,8 @@ export type TemplateDetail = {
   designNotes: string
   images: string[]
   backImage?: string | null
+  /** Medusa collection id — used for "More from this collection" queries */
+  collectionId?: string | null
 }
 
 // ─── Medusa variant → your Listing shape ──────────────────────────────────────
@@ -83,6 +85,7 @@ function toListingAndTemplate(product: any): {
     designNotes: product.description ?? "",
     images,
     backImage,
+    collectionId: (product.collection?.id as string | undefined) ?? null,
   }
 
   const listings: Listing[] = (product.variants ?? []).map((v: any): Listing => {

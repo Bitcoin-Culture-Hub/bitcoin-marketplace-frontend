@@ -8,8 +8,8 @@ import { CartProvider } from "@/context/CartContext";
 import { CardImageProvider } from "@/providers/CardImageProvider";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import ScrollToTop from "@/components/layout/ScrollToTop";
 import Login from "./pages/Login";
-import Homepage from "./pages/Homepage";
 import Marketplace from "./pages/Marketplace";
 import ManageInventory from "./pages/ManageInventory";
 import CardPage from "./pages/CardPage";
@@ -19,7 +19,6 @@ import BulkImport from "./pages/BulkImport";
 import NotFound from "./pages/NotFound";
 import OrderConfirmPage from "./pages/OrderConfirmPage";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
-import SellerOffersPage from "./pages/SellerOffersPage"
 import MyOffers from "./pages/MyOffers"
 import ProfilePage from "./pages/ProfilePage"
 import DashboardLayout from "./pages/dashboard/DashboardLayout"
@@ -47,11 +46,12 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ScrollToTop />
             <CartDrawer />
             <Routes>
               {/* Public */}
               <Route path="/" element={<Navigate to="/homepage" replace />} />
-              <Route path="/homepage" element={<Homepage />} />
+              <Route path="/homepage" element={<Marketplace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/templates/:templateId" element={<CardPage />} />

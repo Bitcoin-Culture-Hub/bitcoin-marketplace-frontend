@@ -264,14 +264,7 @@ const CopiesTable = ({ listings, card }: CopiesTableProps) => {
                       </div>
                       <div className="col-span-2">
                         {listing.acceptsOffers ? (
-                          <span className="text-sm text-foreground">
-                            Yes
-                            {listing.minOfferBTC && (
-                              <span className="text-xs text-muted-foreground ml-1">
-                                (min {listing.minOfferBTC})
-                              </span>
-                            )}
-                          </span>
+                          <span className="text-sm text-foreground">Yes</span>
                         ) : (
                           <span className="text-sm text-muted-foreground">No</span>
                         )}

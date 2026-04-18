@@ -17,6 +17,7 @@ const breadcrumbMap: Record<string, string> = {
   "/dashboard/orders": "Orders",
   "/dashboard/offers": "Offers",
   "/dashboard/settings": "Settings",
+  "/inventory": "Products",
 };
 
 const DashboardTopbar = () => {

@@ -438,7 +438,7 @@ const ProfilePage = () => {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <Header />
+        <Header variant="light" />
         <div className="flex justify-center py-16">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
@@ -462,7 +462,7 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
+      <Header variant="light" />
       <div className="max-w-3xl mx-auto px-6 py-10 w-full space-y-6">
 
         {/* Profile header */}
