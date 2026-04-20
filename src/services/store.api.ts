@@ -87,6 +87,39 @@ async function storeFetch<T>(
   return body as T
 }
 
+export type VerifyCustomerEmailResponse = {
+  verified: boolean
+  verified_at?: string
+  already_verified?: boolean
+}
+
+export type ResendCustomerEmailVerificationResponse = {
+  sent: boolean
+  email: string
+  expires_at: string
+}
+
+export async function verifyCustomerEmailCode(
+  code: string
+): Promise<VerifyCustomerEmailResponse> {
+  return storeFetch<VerifyCustomerEmailResponse>(
+    "/store/customers/me/email-verification",
+    {
+      method: "POST",
+      body: JSON.stringify({ code }),
+    }
+  )
+}
+
+export async function resendCustomerEmailVerification(): Promise<ResendCustomerEmailVerificationResponse> {
+  return storeFetch<ResendCustomerEmailVerificationResponse>(
+    "/store/customers/me/email-verification/resend",
+    {
+      method: "POST",
+    }
+  )
+}
+
 export async function addToCart(card_id: string): Promise<CartAddResponse> {
   return storeFetch<CartAddResponse>("/store/cart/add", {
     method: "POST",

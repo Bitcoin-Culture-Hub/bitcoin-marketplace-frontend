@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { medusa } from "@/lib/medusa";
 import { createVendor } from "@/services/store.api";
+import { useAuth } from "@/context/AuthContext";
 
 export type VerificationPayload = {
   // Address step
@@ -18,6 +19,10 @@ export type VerificationPayload = {
   storefrontName: string;
   termsAccepted: boolean;
 };
+
+type SellerMetadataCarrier = {
+  metadata?: Record<string, unknown> | null;
+} | null | undefined;
 
 /** Generates a URL-friendly slug from a store name. */
 function toSlug(name: string): string {
@@ -38,6 +43,7 @@ function toSlug(name: string): string {
  */
 export function useVerification() {
   const queryClient = useQueryClient();
+  const { refreshCustomer } = useAuth();
 
   return useMutation({
     mutationFn: async (data: VerificationPayload) => {
@@ -77,6 +83,7 @@ export function useVerification() {
     onSuccess: () => {
       // Bust the customer cache so Header/ProtectedRoute see updated metadata
       queryClient.invalidateQueries({ queryKey: ["customer"] });
+      void refreshCustomer();
     },
   });
 }
@@ -85,6 +92,6 @@ export function useVerification() {
  * Simple hook to check if the current customer is a verified seller.
  * Reads from customer metadata set during verification.
  */
-export function useIsVerifiedSeller(customer: any) {
+export function useIsVerifiedSeller(customer: SellerMetadataCarrier) {
   return customer?.metadata?.is_verified_seller === true;
 }

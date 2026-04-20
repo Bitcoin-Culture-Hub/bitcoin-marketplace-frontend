@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useVerification } from "@/hooks/medusa/useVerification";
+import { useAuth } from "@/context/AuthContext";
+import { isCustomerEmailVerified } from "@/hooks/medusa/useEmailVerification";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Check } from "lucide-react";
@@ -23,15 +25,20 @@ const VerifyStorefront = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const { customer } = useAuth();
   const verifyMutation = useVerification();
 
   const returnTo = searchParams.get("returnTo");
   const itemId = searchParams.get("itemId");
 
-  const [currentStep, setCurrentStep] = useState<VerificationStep>("email");
-  const [stepNumber, setStepNumber] = useState(0);
+  const emailVerifiedOnLoad = isCustomerEmailVerified(customer);
 
-  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [currentStep, setCurrentStep] = useState<VerificationStep>(
+    emailVerifiedOnLoad ? "address" : "email"
+  );
+  const [stepNumber, setStepNumber] = useState(emailVerifiedOnLoad ? 1 : 0);
+
+  const [isEmailVerified, setIsEmailVerified] = useState(emailVerifiedOnLoad);
   const [addressData, setAddressData] = useState<AddressData>({
     fullName: "",
     addressLine1: "",
@@ -46,6 +53,10 @@ const VerifyStorefront = () => {
   const [btcPayoutAddress, setBtcPayoutAddress] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [storefrontName, setStorefrontName] = useState("");
+
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    return error instanceof Error ? error.message : fallback;
+  };
 
   const getReturnPath = (): string => {
     switch (returnTo) {
@@ -141,10 +152,13 @@ const VerifyStorefront = () => {
         termsAccepted,
       });
       setCurrentStep("complete");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast({
         title: "Verification failed",
-        description: err?.message || "Could not save your details. Please try again.",
+        description: getErrorMessage(
+          err,
+          "Could not save your details. Please try again."
+        ),
         variant: "destructive",
       });
     }
@@ -241,7 +255,7 @@ const VerifyStorefront = () => {
             <div className="max-w-md mx-auto">
               {currentStep === "email" && (
                 <EmailVerificationStep
-                  email="user@example.com"
+                  email={customer?.email ?? ""}
                   isVerified={isEmailVerified}
                   onVerified={handleEmailVerified}
                   onBack={() => navigate(-1)}
