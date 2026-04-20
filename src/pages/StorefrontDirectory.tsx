@@ -35,7 +35,7 @@ const StorefrontDirectory = () => {
       </section>
 
       {/* Grid */}
-      <section className="flex-1 px-6 pb-16">
+      <section className="flex-1 px-6 pb-32 lg:pb-48">
         <div className="max-w-[1052px] mx-auto">
           {isLoading && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
