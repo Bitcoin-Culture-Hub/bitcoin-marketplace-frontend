@@ -192,7 +192,7 @@ const VerifyStorefront = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header variant="light" />
       <main className="max-w-3xl mx-auto px-6 py-8">
         {/* Purpose header */}
         <div className="text-center space-y-2 mb-6">

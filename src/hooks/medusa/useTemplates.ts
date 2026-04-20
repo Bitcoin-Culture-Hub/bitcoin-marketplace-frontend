@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { medusa } from "@/lib/medusa"
 import { getCardImages } from "@/services/cardImageLookup"
+import { listAllStoreProducts } from "@/services/medusa-products"
 
 // ─── Types matching your TemplateTileProps exactly ────────────────────────────
 
@@ -81,7 +82,7 @@ function toCardTemplate(product: any): CardTemplate {
   ).length
 
   const meta = product.metadata ?? {}
-  const series = (product.collection?.title as string) ?? (meta.series_name as string) ?? (meta.series as string) ?? "—"
+  const series = (meta.series_name as string) ?? (meta.series as string) ?? (product.collection?.title as string) ?? "—"
   const cardNumber = (meta.card_number as string) ?? product.handle ?? "—"
 
   let image = product.thumbnail ?? ""
@@ -129,29 +130,32 @@ type UseTemplatesOptions = {
   limit?: number
   collectionId?: string   // maps to your "series" filter
   availableOnly?: boolean
+  fetchAll?: boolean
 }
 
 export function useTemplates(options: UseTemplatesOptions = {}) {
-  const { limit = 50, collectionId, availableOnly } = options
+  const { limit = 50, collectionId, availableOnly, fetchAll = false } = options
 
   return useQuery({
-    queryKey: ["templates", limit, collectionId, availableOnly],
+    queryKey: ["templates", limit, collectionId, availableOnly, fetchAll],
     queryFn: async () => {
       const params: Record<string, unknown> = {
-        limit,
         fields:
           "id,title,handle,thumbnail,collection.*,metadata,variants.*,variants.prices.*",
       }
       if (collectionId) params["collection_id[]"] = collectionId
 
-      const { products } = await medusa.store.product.list(params)
+      const products = fetchAll
+        ? await listAllStoreProducts(params)
+        : ((await medusa.store.product.list({ ...params, limit })).products as any[])
+
       let templates = (products as any[]).map(toCardTemplate)
 
       if (availableOnly) {
         templates = templates.filter((t) => t.availableCount > 0)
       }
 
-      return templates
+      return  templates
     },
     staleTime: 60_000, // 1 minute
   })
@@ -171,8 +175,7 @@ export function useTemplate(productId: string) {
   })
 }
 
-// ─── Collections (series) for the filter sidebar ─────────────────────────────
-
+// currently using this for the sidebar, might need to make this into a different file for easier usecases
 export function useCollections() {
   return useQuery({
     queryKey: ["collections"],

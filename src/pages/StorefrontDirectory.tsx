@@ -1,12 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Store, ChevronRight } from "lucide-react";
+import { Store, ChevronRight,Plus } from "lucide-react";
 import { listAllVendors, type VendorRecord } from "@/services/store.api";
 import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import {useUserRole} from "@/hooks/useUserRole";
 
 const StorefrontDirectory = () => {
+
+  const {
+    isStorefrontOwner,
+    canListCards,
+    canCreateStorefront,
+    vendor,
+  } = useUserRole()
   const { data, isLoading } = useQuery({
     queryKey: ["vendors", "all"],
     queryFn: async () => {
@@ -66,6 +74,7 @@ const StorefrontDirectory = () => {
                 {vendors.map((vendor) => (
                   <VendorCard key={vendor.id} vendor={vendor} />
                 ))}
+                {!isStorefrontOwner && <CreateVendorCard />}
               </div>
             </>
           )}
@@ -111,5 +120,34 @@ const VendorCard = ({ vendor }: { vendor: VendorRecord }) => (
     </div>
   </Link>
 );
+
+
+const CreateVendorCard = () => (
+  <Link
+    to={`/verify`}
+    className="group block p-6 bg-white shadow-card rounded-card transition-all duration-200 hover:shadow-card-hover"
+  >
+    <div className="flex items-start justify-between">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-[#F7931A]/10 rounded-full flex items-center justify-center shrink-0">
+          <Plus className="h-5 w-5 text-[#F7931A]" />
+        </div>
+        <div>
+          <h3 className="font-sans font-medium text-[16px] text-[#121212] group-hover:text-[#F7931A] transition-colors">
+            Create Store Front
+          </h3>
+        </div>
+      </div>
+      <ChevronRight className="h-5 w-5 text-[#121212]/30 group-hover:text-[#F7931A] transition-colors shrink-0 mt-1" />
+    </div>
+
+    <div className="border-t border-[rgba(175,175,175,0.2)] mt-4 pt-4">
+      <div className="flex items-center gap-4 text-[12px] text-[#121212]/60">
+          <span className="wrap max-w-[180px]">Create your storefront to start listing your cards</span>
+      </div>
+    </div>
+  </Link>
+);
+
 
 export default StorefrontDirectory;
