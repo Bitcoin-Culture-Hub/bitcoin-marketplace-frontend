@@ -11,44 +11,90 @@ import TemplateTileSkeleton from "./TemplateTileSkeleton";
 import FilterChips, { FilterChip } from "./FilterChips";
 import Pagination from "./Pagination";
 import { Button } from "@/components/ui/button";
-import { useTemplates } from "@/hooks/medusa/useTemplates";
-import { listAllStoreProducts } from "@/services/medusa-products";
+import type { CardTemplate } from "@/hooks/medusa/useTemplates";
+import {
+  filterMarketplaceTemplates,
+  getMarketplaceYearFilterLabel,
+  type MarketplaceFilterState,
+  type MarketplaceSortOption,
+  type MarketplaceFilterType,
+  type MarketplaceFilterOption,
+} from "@/lib/marketplace-filters";
+
 interface TemplateGridProps {
+  templates: CardTemplate[];
+  isLoading: boolean;
+  isError: boolean;
+  seriesOptions: MarketplaceFilterOption[];
   selectedSeries: string[];
   selectedGradingCompanies: string[];
   selectedGrades: string[];
+  yearFrom: string;
+  yearTo: string;
   availableOnly: boolean;
-  onRemoveFilter: (type: string, value: string) => void;
+  onRemoveFilter: (type: MarketplaceFilterType, value: string) => void;
   onClearAllFilters: () => void;
   searchQuery: string;
-  onSearchChange: (value: string) => void;
 }
 
 const ITEMS_PER_PAGE = 12;
 
 const TemplateGrid = ({
+  templates,
+  isLoading,
+  isError,
+  seriesOptions,
   selectedSeries,
   selectedGradingCompanies,
   selectedGrades,
+  yearFrom,
+  yearTo,
   availableOnly,
   onRemoveFilter,
   onClearAllFilters,
   searchQuery,
-  onSearchChange,
 }: TemplateGridProps) => {
-  const [sortBy, setSortBy] = useState("floor-asc");
+  const [sortBy, setSortBy] = useState<MarketplaceSortOption>("floor-asc");
   const [currentPage, setCurrentPage] = useState(1);
+  const filterState = useMemo<MarketplaceFilterState>(
+    () => ({
+      availableOnly,
+      searchQuery,
+      selectedGrades,
+      selectedGradingCompanies,
+      selectedSeries,
+      sortBy,
+      yearFrom,
+      yearTo,
+    }),
+    [
+      availableOnly,
+      searchQuery,
+      selectedGrades,
+      selectedGradingCompanies,
+      selectedSeries,
+      sortBy,
+      yearFrom,
+      yearTo,
+    ]
+  );
+  const seriesLabelLookup = useMemo(
+    () =>
+      Object.fromEntries(
+        seriesOptions.map((seriesOption) => [seriesOption.value, seriesOption.label])
+      ) as Record<string, string>,
+    [seriesOptions]
+  );
 
-  const { data: allTemplates = [], isLoading, isError } = useTemplates({
-    fetchAll: true,
-    availableOnly,
-  });
-  console.log(allTemplates)
   // Build filter chips
   const filterChips: FilterChip[] = useMemo(() => {
     const chips: FilterChip[] = [];
     selectedSeries.forEach((s) =>
-      chips.push({ id: `series-${s}`, label: s, category: "series" })
+      chips.push({
+        id: `series-${s}`,
+        label: seriesLabelLookup[s] ?? s,
+        category: "series",
+      })
     );
     selectedGradingCompanies.forEach((c) =>
       chips.push({ id: `grading-${c}`, label: c, category: "grading" })
@@ -59,69 +105,58 @@ const TemplateGrid = ({
     if (availableOnly) {
       chips.push({ id: "available-only", label: "Available only", category: "availability" });
     }
+    const yearLabel = getMarketplaceYearFilterLabel(yearFrom, yearTo);
+    if (yearLabel) {
+      chips.push({ id: "year-range", label: yearLabel, category: "year" });
+    }
     return chips;
-  }, [selectedSeries, selectedGradingCompanies, selectedGrades, availableOnly]);
+  }, [
+    availableOnly,
+    selectedGrades,
+    selectedGradingCompanies,
+    selectedSeries,
+    seriesLabelLookup,
+    yearFrom,
+    yearTo,
+  ]);
 
   const handleRemoveChip = (chipId: string) => {
     if (chipId === "available-only") {
       onRemoveFilter("availability", "available-only");
       return;
     }
-    const [type, ...valueParts] = chipId.split("-");
-    onRemoveFilter(type, valueParts.join("-"));
+    const separatorIndex = chipId.indexOf("-");
+    const type = chipId.slice(0, separatorIndex);
+    const value = chipId.slice(separatorIndex + 1);
+
+    if (
+      type === "series" ||
+      type === "grading" ||
+      type === "grade" ||
+      type === "year"
+    ) {
+      onRemoveFilter(type, value);
+    }
   };
 
   // ── Filter + sort ────────────────────────────────────────────────────
   const filteredTemplates = useMemo(() => {
-    let result = [...allTemplates];
-
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (t) =>
-          t.name.toLowerCase().includes(q) ||
-          t.series.toLowerCase().includes(q) ||
-          t.cardNumber.toLowerCase().includes(q)
-      );
-    }
-
-    if (selectedSeries.length > 0) {
-      result = result.filter((t) => selectedSeries.includes(t.series));
-    }
-
-    switch (sortBy) {
-      case "floor-asc":
-        result.sort((a, b) => {
-          if (a.floorPriceBTC === null) return 1;
-          if (b.floorPriceBTC === null) return -1;
-          return a.floorPriceBTC - b.floorPriceBTC;
-        });
-        break;
-      case "floor-desc":
-        result.sort((a, b) => {
-          if (a.floorPriceBTC === null) return 1;
-          if (b.floorPriceBTC === null) return -1;
-          return b.floorPriceBTC - a.floorPriceBTC;
-        });
-        break;
-      case "available":
-        result.sort((a, b) => b.availableCount - a.availableCount);
-        break;
-      case "newest":
-        result.sort((a, b) => {
-          if (!a.newestSupplyAt) return 1;
-          if (!b.newestSupplyAt) return -1;
-          return b.newestSupplyAt.getTime() - a.newestSupplyAt.getTime();
-        });
-        break;
-    }
-    return result;
-  }, [allTemplates, searchQuery, selectedSeries, sortBy]);
+    return filterMarketplaceTemplates(templates, filterState);
+  }, [filterState, templates]);
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedSeries, selectedGradingCompanies, selectedGrades, availableOnly, sortBy]);
+  }, [
+    searchQuery,
+    selectedSeries,
+    selectedGradingCompanies,
+    selectedGrades,
+    yearFrom,
+    yearTo,
+    availableOnly,
+    sortBy,
+  ]);
 
   const totalPages = Math.max(1, Math.ceil(filteredTemplates.length / ITEMS_PER_PAGE));
   const paginatedTemplates = filteredTemplates.slice(
@@ -138,7 +173,10 @@ const TemplateGrid = ({
             {filteredTemplates.length} Collectibles found
           </span>
         </div>
-        <Select value={sortBy} onValueChange={setSortBy}>
+        <Select
+          value={sortBy}
+          onValueChange={(value) => setSortBy(value as MarketplaceSortOption)}
+        >
           <SelectTrigger className="w-[261px] h-[44px] bg-[#fefefe] border-0 rounded-btn text-base tracking-[0.014em] text-[#121212]/70">
             <SelectValue />
           </SelectTrigger>

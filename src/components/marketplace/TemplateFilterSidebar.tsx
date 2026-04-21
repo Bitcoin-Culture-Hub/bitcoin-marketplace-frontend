@@ -4,23 +4,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import type { MarketplaceFilterOption } from "@/lib/marketplace-filters";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-
-const series = [
-  "Series 1 OPP",
-  "Series 2 OPP",
-  "Series 3 OPP",
-  "Series 4 OPP",
-  "Commemorative",
-  "Collaborative",
-];
-
-const gradingCompanies = ["PSA", "BGS", "SGC", "TAG"];
-const grades = ["10", "9.5", "9", "8.5", "8", "7", "6"];
 
 interface FilterSectionProps {
   title: string;
@@ -55,10 +44,17 @@ const FilterSection = ({ title, children, defaultOpen = false }: FilterSectionPr
 interface TemplateFilterSidebarProps {
   selectedSeries: string[];
   onSeriesChange: (series: string[]) => void;
+  seriesOptions: MarketplaceFilterOption[];
   selectedGradingCompanies: string[];
   onGradingCompaniesChange: (companies: string[]) => void;
+  gradingCompanyOptions: MarketplaceFilterOption[];
   selectedGrades: string[];
   onGradesChange: (grades: string[]) => void;
+  gradeOptions: MarketplaceFilterOption[];
+  yearFrom: string;
+  onYearFromChange: (value: string) => void;
+  yearTo: string;
+  onYearToChange: (value: string) => void;
   availableOnly: boolean;
   onAvailableOnlyChange: (value: boolean) => void;
   onReset: () => void;
@@ -67,21 +63,28 @@ interface TemplateFilterSidebarProps {
 const TemplateFilterSidebar = ({
   selectedSeries,
   onSeriesChange,
+  seriesOptions,
   selectedGradingCompanies,
   onGradingCompaniesChange,
+  gradingCompanyOptions,
   selectedGrades,
   onGradesChange,
+  gradeOptions,
+  yearFrom,
+  onYearFromChange,
+  yearTo,
+  onYearToChange,
   availableOnly,
   onAvailableOnlyChange,
   onReset,
 }: TemplateFilterSidebarProps) => {
+  const sanitizeYearInput = (value: string) => value.replace(/\D/g, "").slice(0, 4);
 
-
-  const handleSeriesToggle = (s: string) => {
-    if (selectedSeries.includes(s)) {
-      onSeriesChange(selectedSeries.filter((item) => item !== s));
+  const handleSeriesToggle = (seriesValue: string) => {
+    if (selectedSeries.includes(seriesValue)) {
+      onSeriesChange(selectedSeries.filter((item) => item !== seriesValue));
     } else {
-      onSeriesChange([...selectedSeries, s]);
+      onSeriesChange([...selectedSeries, seriesValue]);
     }
   };
 
@@ -122,15 +125,15 @@ const TemplateFilterSidebar = ({
         {/* Series */}
         <FilterSection title="Series" defaultOpen>
           <div className="space-y-3">
-            {series.map((s) => (
-              <label key={s} className="flex items-center gap-3 cursor-pointer group">
+            {seriesOptions.map((seriesOption) => (
+              <label key={seriesOption.value} className="flex items-center gap-3 cursor-pointer group">
                 <Checkbox
-                  checked={selectedSeries.includes(s)}
-                  onCheckedChange={() => handleSeriesToggle(s)}
+                  checked={selectedSeries.includes(seriesOption.value)}
+                  onCheckedChange={() => handleSeriesToggle(seriesOption.value)}
                   className="border-[#d9d9d9] data-[state=checked]:bg-[#121212] data-[state=checked]:border-[#121212] h-4 w-4 rounded-[4px]"
                 />
                 <span className="text-[14px] text-[#555] group-hover:text-[#121212] transition-colors">
-                  {s}
+                  {seriesOption.label}
                 </span>
               </label>
             ))}
@@ -140,15 +143,15 @@ const TemplateFilterSidebar = ({
         {/* Grade */}
         <FilterSection title="Grade">
           <div className="space-y-3">
-            {grades.map((grade) => (
-              <label key={grade} className="flex items-center gap-3 cursor-pointer group">
+            {gradeOptions.map((gradeOption) => (
+              <label key={gradeOption.value} className="flex items-center gap-3 cursor-pointer group">
                 <Checkbox
-                  checked={selectedGrades.includes(grade)}
-                  onCheckedChange={() => handleGradeToggle(grade)}
+                  checked={selectedGrades.includes(gradeOption.value)}
+                  onCheckedChange={() => handleGradeToggle(gradeOption.value)}
                   className="border-[#d9d9d9] data-[state=checked]:bg-[#121212] data-[state=checked]:border-[#121212] h-4 w-4 rounded-[4px]"
                 />
                 <span className="text-[14px] text-[#555] group-hover:text-[#121212] transition-colors">
-                  {grade}
+                  {gradeOption.label}
                 </span>
               </label>
             ))}
@@ -160,10 +163,20 @@ const TemplateFilterSidebar = ({
           <div className="flex gap-3 mt-1">
             <Input
               placeholder="From"
+              value={yearFrom}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={4}
+              onChange={(event) => onYearFromChange(sanitizeYearInput(event.target.value))}
               className="bg-[#fefefe] border-[#d9d9d9] text-[14px] h-10 rounded-lg"
             />
             <Input
               placeholder="To"
+              value={yearTo}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={4}
+              onChange={(event) => onYearToChange(sanitizeYearInput(event.target.value))}
               className="bg-[#fefefe] border-[#d9d9d9] text-[14px] h-10 rounded-lg"
             />
           </div>
@@ -172,15 +185,15 @@ const TemplateFilterSidebar = ({
         {/* Grading Company */}
         <FilterSection title="Grading Company">
           <div className="space-y-3">
-            {gradingCompanies.map((company) => (
-              <label key={company} className="flex items-center gap-3 cursor-pointer group">
+            {gradingCompanyOptions.map((companyOption) => (
+              <label key={companyOption.value} className="flex items-center gap-3 cursor-pointer group">
                 <Checkbox
-                  checked={selectedGradingCompanies.includes(company)}
-                  onCheckedChange={() => handleGradingCompanyToggle(company)}
+                  checked={selectedGradingCompanies.includes(companyOption.value)}
+                  onCheckedChange={() => handleGradingCompanyToggle(companyOption.value)}
                   className="border-[#d9d9d9] data-[state=checked]:bg-[#121212] data-[state=checked]:border-[#121212] h-4 w-4 rounded-[4px]"
                 />
                 <span className="text-[14px] text-[#555] group-hover:text-[#121212] transition-colors">
-                  {company}
+                  {companyOption.label}
                 </span>
               </label>
             ))}

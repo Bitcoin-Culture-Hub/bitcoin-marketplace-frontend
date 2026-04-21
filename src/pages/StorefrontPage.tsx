@@ -7,6 +7,13 @@ import { getCardImages } from "@/services/cardImageLookup";
 import { medusa } from "@/lib/medusa";
 import type { CardTemplate } from "@/hooks/medusa/useTemplates";
 import {
+  getMarketplaceDisplayLabel,
+  normalizeMarketplaceGrade,
+  normalizeMarketplaceGradingCompany,
+  normalizeMarketplaceSeries,
+  parseMarketplaceYear,
+} from "@/lib/marketplace-filters";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -54,6 +61,22 @@ function toCardTemplate(product: any): CardTemplate {
     (floorVariant?.metadata?.grading_company as string | undefined) ?? null;
 
   const availableCount = availableVariants.length;
+  const availableGrades = [
+    ...new Set(
+      availableVariants
+        .map((variant) => normalizeMarketplaceGrade(variant.metadata?.grade ?? variant.title))
+        .filter((grade): grade is string => grade !== null)
+    ),
+  ];
+  const availableGradingCompanies = [
+    ...new Set(
+      availableVariants
+        .map((variant) =>
+          normalizeMarketplaceGradingCompany(variant.metadata?.grading_company)
+        )
+        .filter((company): company is string => company !== null)
+    ),
+  ];
 
   const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const newestVariantDate = variants.reduce<Date | null>((latest, v) => {
@@ -71,12 +94,16 @@ function toCardTemplate(product: any): CardTemplate {
     (v) => v.metadata?.accepts_offers === true
   ).length;
 
-  const series =
-    (product.collection?.title as string) ??
+  const series = getMarketplaceDisplayLabel(
     (product.metadata?.series_name as string) ??
-    "—";
-  const cardNumber =
-    (product.metadata?.card_number as string) ?? product.handle ?? "—";
+      (product.metadata?.series as string) ??
+      (product.collection?.title as string)
+  );
+  const cardNumber = getMarketplaceDisplayLabel(
+    (product.metadata?.card_number as string) ?? product.handle
+  );
+  const year = parseMarketplaceYear(product.metadata?.year as string | number | undefined);
+  const seriesKey = normalizeMarketplaceSeries(series);
 
   const meta = product.metadata ?? {};
   let image = product.thumbnail ?? "";
@@ -95,9 +122,11 @@ function toCardTemplate(product: any): CardTemplate {
     id: product.id,
     name: product.title,
     series,
+    seriesKey,
     cardNumber,
     image,
     backImage,
+    year,
     availableCount,
     floorPriceBTC,
     floorGrade,
@@ -106,6 +135,8 @@ function toCardTemplate(product: any): CardTemplate {
     isNewSupply,
     isLowPop,
     newestSupplyAt: newestVariantDate,
+    availableGrades,
+    availableGradingCompanies,
   };
 }
 
