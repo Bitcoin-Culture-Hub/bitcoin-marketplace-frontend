@@ -12,7 +12,7 @@ import FilterChips, { FilterChip } from "./FilterChips";
 import Pagination from "./Pagination";
 import { Button } from "@/components/ui/button";
 import { useTemplates } from "@/hooks/medusa/useTemplates";
-
+import { listAllStoreProducts } from "@/services/medusa-products";
 interface TemplateGridProps {
   selectedSeries: string[];
   selectedGradingCompanies: string[];
@@ -39,12 +39,11 @@ const TemplateGrid = ({
   const [sortBy, setSortBy] = useState("floor-asc");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // ── Live data from Medusa ─────────────────────────────────────────────
   const { data: allTemplates = [], isLoading, isError } = useTemplates({
-    limit: 100,
+    fetchAll: true,
     availableOnly,
   });
-
+  console.log(allTemplates)
   // Build filter chips
   const filterChips: FilterChip[] = useMemo(() => {
     const chips: FilterChip[] = [];
