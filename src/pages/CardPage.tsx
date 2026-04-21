@@ -3,7 +3,11 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Eye, Heart, Share2 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import TemplateImageGallery from "@/components/card/TemplateImageGallery";
+import {
+  TemplateMainImage,
+  TemplateThumbnails,
+  useTemplateImageState,
+} from "@/components/card/TemplateImageGallery";
 import Offers from "@/components/card/Offers";
 import MoreFromCollection from "@/components/card/MoreFromCollection";
 import { Button } from "@/components/ui/button";
@@ -64,6 +68,7 @@ const CardPage = () => {
 
   const [offerListing, setOfferListingState] = useState<Listing | null>(null);
   const [offerOpen, setOfferOpen] = useState(false);
+  const galleryState = useTemplateImageState();
 
   /** Mirrors CopiesTable: open the OfferModal for a specific listing. */
   const openOffer = (listing: Listing) => {
@@ -174,10 +179,15 @@ const CardPage = () => {
         </button>
 
         {/* Hero */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 mb-32 lg:mb-40">
-          <TemplateImageGallery images={template.images} name={template.name} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-rows-[auto_auto] gap-x-12 lg:gap-x-16 gap-y-4 mb-32 lg:mb-40">
+          <TemplateMainImage
+            images={template.images}
+            name={template.name}
+            state={galleryState}
+            className="lg:row-start-1 lg:col-start-1"
+          />
 
-          <div className="flex flex-col">
+          <div className="flex flex-col lg:row-start-1 lg:col-start-2">
             {/* Engagement row */}
             <div className="flex items-center gap-2 mb-5">
               <button
@@ -212,13 +222,21 @@ const CardPage = () => {
               </button>
             </div>
 
+            {/*
+              Title / description / pills are clamped so the right column
+              never grows taller than the square image on the left, which
+              keeps the Buy Now / Make Offer buttons (pinned with mt-auto
+              below) aligned with the image's bottom edge for EVERY card,
+              regardless of title length.
+            */}
+
             {/* Title */}
-            <h1 className="font-display font-bold text-gray-900 leading-[1.05] tracking-tight text-4xl md:text-5xl lg:text-[56px] mb-5">
+            <h1 className="font-display font-bold text-gray-900 leading-[1.05] tracking-tight text-4xl md:text-5xl mb-4 line-clamp-2">
               {template.name}
             </h1>
 
             {/* Pills row — USD + grader/grade + cert */}
-            <div className="flex flex-wrap items-center gap-2 mb-7">
+            <div className="flex flex-wrap items-center gap-2 mb-5">
               {priceUSD !== null && (
                 <span className="h-9 px-4 rounded-lg border border-gray-200 text-gray-800 text-sm font-semibold inline-flex items-center">
                   {formatCurrency(priceUSD)}
@@ -240,14 +258,14 @@ const CardPage = () => {
             <h3 className="text-base font-semibold text-gray-900 mb-2">
               About This Card
             </h3>
-            <p className="text-sm text-gray-600 leading-relaxed mb-6 max-w-[520px]">
+            <p className="text-sm text-gray-600 leading-relaxed mb-5 max-w-[520px] line-clamp-3">
               {template.designNotes ||
                 "No description available for this card."}
             </p>
 
             {/* Social proof */}
             {availableCount > 0 && (
-              <div className="inline-flex w-fit items-center gap-3 pl-2 pr-5 h-12 rounded-full border border-gray-200 bg-white mb-6">
+              <div className="inline-flex w-fit items-center gap-3 pl-2 pr-5 h-12 rounded-full border border-gray-200 bg-white mb-5">
                 <div className="flex -space-x-2">
                   {["#fbbf24", "#f97316", "#ef4444"].map((bg, i) => (
                     <div
@@ -266,15 +284,40 @@ const CardPage = () => {
               </div>
             )}
 
-            {/* Actions */}
-            <div className="space-y-3 mt-2 max-w-[420px]">
+            {/* Actions — mt-auto pins these to the bottom of the right
+                column so they sit flush with the image's bottom edge */}
+            <div className="space-y-3 mt-auto pt-4 max-w-[420px]">
               <Button
                 className="w-full h-12 rounded-2xl bg-btc-orange hover:bg-btc-orange/90 text-white font-medium text-base shadow-none"
                 disabled={!featured}
                 onClick={() => {
-                  toast({
-                    title: "Checkout coming soon",
-                    description: "Direct purchase is not yet available.",
+                  if (!featured) return;
+                  // TODO(route-protection): Swap this for
+                  //   navigate(`/checkout/${featured.id}`)
+                  // once CheckoutPage fetches the listing by id from the
+                  // API. Passing the whole listing (including priceUSD)
+                  // through location.state is client-trusted data and
+                  // also makes /checkout break on refresh / direct URL.
+                  navigate("/checkout", {
+                    state: {
+                      template: {
+                        id: template.id,
+                        name: template.name,
+                        series: template.series,
+                        year: template.year,
+                        cardNumber: template.cardNumber,
+                        images: template.images,
+                      },
+                      listing: {
+                        id: featured.id,
+                        sellerName: featured.sellerName,
+                        sellerVerified: featured.sellerVerified,
+                        grade: featured.grade,
+                        gradingCompany: featured.gradingCompany,
+                        certNumber: featured.certNumber,
+                        priceUSD: featured.priceUSD,
+                      },
+                    },
                   });
                 }}
               >
@@ -290,17 +333,44 @@ const CardPage = () => {
               </Button>
             </div>
           </div>
-        </div>
 
+          {/* Thumbnails live in row 2 so they don't stretch the right column */}
+          <TemplateThumbnails
+            images={template.images}
+            name={template.name}
+            state={galleryState}
+            className="lg:row-start-2 lg:col-start-1"
+          />
+        </div>
 
         {/* Offers from available listings */}
         <div className="mb-32 lg:mb-40">
           <Offers
             listings={filteredListings}
-            onBuyNow={() => {
-              toast({
-                title: "Checkout coming soon",
-                description: "Direct purchase is not yet available.",
+            onBuyNow={(listing) => {
+              // TODO(route-protection): See note on the hero Buy Now
+              // button above — swap for navigate(`/checkout/${listing.id}`)
+              // once CheckoutPage fetches the listing by id.
+              navigate("/checkout", {
+                state: {
+                  template: {
+                    id: template.id,
+                    name: template.name,
+                    series: template.series,
+                    year: template.year,
+                    cardNumber: template.cardNumber,
+                    images: template.images,
+                  },
+                  listing: {
+                    id: listing.id,
+                    sellerName: listing.sellerName,
+                    sellerVerified: listing.sellerVerified,
+                    grade: listing.grade,
+                    gradingCompany: listing.gradingCompany,
+                    certNumber: listing.certNumber,
+                    priceUSD: listing.priceUSD,
+                  },
+                },
               });
             }}
             onMakeOffer={(listing) => openOffer(listing)}

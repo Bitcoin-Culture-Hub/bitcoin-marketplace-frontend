@@ -58,7 +58,7 @@ const TemplateTile = ({
   return (
     <div
       onClick={() => navigate(detailUrl)}
-      className="group w-full cursor-pointer p-4 bg-white shadow-card rounded-card transition-all duration-200 hover:shadow-card-hover"
+      className="group w-full h-full flex flex-col cursor-pointer p-4 bg-white shadow-card rounded-card transition-all duration-200 hover:shadow-card-hover"
     >
       {/* Image Area */}
       <div
@@ -131,7 +131,7 @@ const TemplateTile = ({
       </div>
 
       {/* Content Below Image */}
-      <div className="flex flex-col gap-3 mt-3">
+      <div className="flex flex-col gap-3 mt-3 flex-1">
         {/* Title */}
         <h3 className="font-sans font-medium text-[14px] leading-[17px] tracking-[0.014em] text-[#121212] line-clamp-1">
           {name}
@@ -143,13 +143,13 @@ const TemplateTile = ({
         {/* Category Line */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-0.5 min-w-0">
-            <span className="text-[12px] text-[rgba(18,18,18,0.6)] tracking-[0.014em] truncate">
+            <span className="text-[12px] text-[rgba(18,18,18,0.6)] tracking-[0.014em] truncate shrink">
               {series}
             </span>
-            <span className="text-[12px] text-[rgba(18,18,18,0.6)] tracking-[0.014em]">
+            <span className="text-[12px] text-[rgba(18,18,18,0.6)] tracking-[0.014em] shrink-0">
               &middot;
             </span>
-            <span className="text-[12px] text-[rgba(18,18,18,0.6)] tracking-[0.014em]">
+            <span className="text-[12px] text-[rgba(18,18,18,0.6)] tracking-[0.014em] truncate shrink">
               {cardNumber}
             </span>
           </div>
@@ -161,7 +161,7 @@ const TemplateTile = ({
         </div>
 
         {/* Divider */}
-        <div className="border-t border-[rgba(175,175,175,0.2)]" />
+        <div className="border-t border-[rgba(175,175,175,0.2)] mt-auto" />
 
         {/* Bottom Row */}
         <div className="flex justify-between items-center">

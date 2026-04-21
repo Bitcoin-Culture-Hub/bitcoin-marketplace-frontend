@@ -285,7 +285,7 @@ const Login = () => {
                     </label>
 
                     {generalError && (
-                      <p className="text-xs text-destructive text-center bg-destructive/10 py-2 px-3 rounded-lg">
+                      <p className="text-xs text-destructive text-center">
                         {generalError}
                       </p>
                     )}
@@ -398,7 +398,7 @@ const Login = () => {
                     </div>
 
                     {generalError && (
-                      <p className="text-xs text-destructive text-center bg-destructive/10 py-2 px-3 rounded-xl">
+                      <p className="text-xs text-destructive text-center">
                         {generalError}
                       </p>
                     )}
