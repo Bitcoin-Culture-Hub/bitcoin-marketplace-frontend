@@ -2,18 +2,71 @@ import { useQuery } from "@tanstack/react-query"
 import { medusa } from "@/lib/medusa"
 import { getCardImages } from "@/services/cardImageLookup"
 import { listAllStoreProducts } from "@/services/medusa-products"
+import {
+  getMarketplaceDisplayLabel,
+  isMarketplaceListedPublicUnsold,
+  normalizeMarketplaceGrade,
+  normalizeMarketplaceGradingCompany,
+  normalizeMarketplaceSeries,
+  parseMarketplaceYear,
+  type MarketplaceAvailabilityMetadata,
+  type MarketplaceTemplateFacetSource,
+} from "@/lib/marketplace-filters"
 
 // ─── Types matching your TemplateTileProps exactly ────────────────────────────
 
-export type CardTemplate = {
+type TemplateVariantMetadata = MarketplaceAvailabilityMetadata & {
+  accepts_offers?: boolean
+  grade?: string
+  grading_company?: string
+  price_btc?: number | string
+  year?: string | number
+}
+
+type TemplateVariant = {
+  created_at?: string | null
+  inventory_quantity?: number | null
+  metadata?: TemplateVariantMetadata | null
+  title?: string | null
+}
+
+type TemplateProductMetadata = {
+  back_image_full?: string
+  back_image_thumb?: string
+  card_number?: string
+  front_image_full?: string
+  front_image_thumb?: string
+  series?: string
+  series_name?: string
+  year?: string | number
+}
+
+type TemplateProduct = {
+  collection?: {
+    title?: string | null
+  } | null
+  id: string
+  handle?: string | null
+  metadata?: TemplateProductMetadata | null
+  thumbnail?: string | null
+  title: string
+  variants?: TemplateVariant[] | null
+}
+
+type TemplateCollection = {
+  id: string
+  title: string
+}
+
+export type CardTemplate = MarketplaceTemplateFacetSource & {
   id: string
   name: string
-  series: string
   cardNumber: string
   image: string
   backImage?: string | null
   frontImageFull?: string
   backImageFull?: string | null
+  year: number | null
   availableCount: number
   floorPriceBTC: number | null
   offersAcceptedCount: number
@@ -28,22 +81,55 @@ export type CardTemplate = {
 
 // ─── Medusa product → your CardTemplate shape ─────────────────────────────────
 
-function toCardTemplate(product: any): CardTemplate {
-  const variants: any[] = product.variants ?? []
+function toNumber(value: number | string | null | undefined): number | null {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null
+  }
 
-  // Floor price: lowest variant price that has inventory and is not sold
-  const availableVariants = variants.filter((v) => {
-    const vm = v.metadata ?? {}
-    const sold =
-      vm.is_sold === true || vm.sold === true || vm.state === "sold"
-    return (v.inventory_quantity ?? 0) > 0 && !sold
-  })
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+
+  return null
+}
+
+function isMarketplaceAvailableVariant(variant: TemplateVariant): boolean {
+  return isMarketplaceListedPublicUnsold(variant.metadata)
+}
+
+function getVariantGrade(variant: TemplateVariant): string | null {
+  return normalizeMarketplaceGrade(variant.metadata?.grade ?? variant.title)
+}
+
+function getVariantGradingCompany(variant: TemplateVariant): string | null {
+  return normalizeMarketplaceGradingCompany(variant.metadata?.grading_company)
+}
+
+function resolveTemplateYear(
+  metadata: TemplateProductMetadata,
+  variants: TemplateVariant[]
+): number | null {
+  const variantYear =
+    variants.find((variant) => parseMarketplaceYear(variant.metadata?.year) !== null)
+      ?.metadata?.year ?? null
+
+  return parseMarketplaceYear(metadata.year ?? variantYear)
+}
+
+function toCardTemplate(product: TemplateProduct): CardTemplate {
+  const variants = product.variants ?? []
+
+  // Floor price: lowest listed/public unsold variant price
+  const availableVariants = variants.filter(isMarketplaceAvailableVariant)
   const pricedVariants = availableVariants
     .map((v) => ({
       variant: v,
-      price: v.metadata?.price_btc as number | undefined,
+      price: toNumber(v.metadata?.price_btc),
     }))
-    .filter((x): x is { variant: any; price: number } => typeof x.price === "number")
+    .filter(
+      (x): x is { variant: TemplateVariant; price: number } => x.price !== null
+    )
 
   const floorPriceBTC =
     pricedVariants.length > 0
@@ -55,12 +141,22 @@ function toCardTemplate(product: any): CardTemplate {
       ? pricedVariants.find((x) => x.price === floorPriceBTC)?.variant
       : availableVariants[0]
 
-  const floorGrade =
-    (floorVariant?.metadata?.grade as string | undefined) ?? null
-  const floorGradingCompany =
-    (floorVariant?.metadata?.grading_company as string | undefined) ?? null
+  const floorGrade = floorVariant ? getVariantGrade(floorVariant) : null
+  const floorGradingCompany = floorVariant
+    ? getVariantGradingCompany(floorVariant)
+    : null
 
   const availableCount = availableVariants.length
+  const availableGrades = [...new Set(availableVariants.map(getVariantGrade).filter(
+    (grade): grade is string => grade !== null
+  ))]
+  const availableGradingCompanies = [
+    ...new Set(
+      availableVariants
+        .map(getVariantGradingCompany)
+        .filter((company): company is string => company !== null)
+    ),
+  ]
 
   // isNewSupply: any variant created in the last 7 days
   const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
@@ -82,8 +178,12 @@ function toCardTemplate(product: any): CardTemplate {
   ).length
 
   const meta = product.metadata ?? {}
-  const series = (meta.series_name as string) ?? (meta.series as string) ?? (product.collection?.title as string) ?? "—"
-  const cardNumber = (meta.card_number as string) ?? product.handle ?? "—"
+  const series = getMarketplaceDisplayLabel(
+    meta.series_name ?? meta.series ?? product.collection?.title
+  )
+  const seriesKey = normalizeMarketplaceSeries(series)
+  const year = resolveTemplateYear(meta, variants)
+  const cardNumber = getMarketplaceDisplayLabel(meta.card_number ?? product.handle)
 
   let image = product.thumbnail ?? ""
   let backImage: string | null = null
@@ -108,11 +208,13 @@ function toCardTemplate(product: any): CardTemplate {
     id: product.id,
     name: product.title,
     series,
+    seriesKey,
     cardNumber,
     image,
     backImage,
     frontImageFull,
     backImageFull,
+    year,
     availableCount,
     floorPriceBTC,
     offersAcceptedCount,
@@ -121,6 +223,8 @@ function toCardTemplate(product: any): CardTemplate {
     newestSupplyAt: newestVariantDate,
     floorGrade,
     floorGradingCompany,
+    availableGrades,
+    availableGradingCompanies,
   }
 }
 
@@ -147,15 +251,15 @@ export function useTemplates(options: UseTemplatesOptions = {}) {
 
       const products = fetchAll
         ? await listAllStoreProducts(params)
-        : ((await medusa.store.product.list({ ...params, limit })).products as any[])
+        : (await medusa.store.product.list({ ...params, limit })).products
 
-      let templates = (products as any[]).map(toCardTemplate)
+      let templates = (products as TemplateProduct[]).map(toCardTemplate)
 
       if (availableOnly) {
         templates = templates.filter((t) => t.availableCount > 0)
       }
 
-      return  templates
+      return templates
     },
     staleTime: 60_000, // 1 minute
   })
@@ -169,7 +273,7 @@ export function useTemplate(productId: string) {
         fields:
           "id,title,handle,thumbnail,description,collection.*,metadata,variants.*,variants.prices.*",
       })
-      return toCardTemplate(product as any)
+      return toCardTemplate(product as TemplateProduct)
     },
     enabled: !!productId,
   })
@@ -181,7 +285,7 @@ export function useCollections() {
     queryKey: ["collections"],
     queryFn: async () => {
       const { collections } = await medusa.store.collection.list()
-      return (collections as any[]).map((c) => ({
+      return (collections as TemplateCollection[]).map((c) => ({
         id: c.id as string,
         title: c.title as string,
       }))

@@ -3,7 +3,7 @@
  *
  * BACKEND INTEGRATION PLAN — we use BTCPay Server for all BTC pricing,
  * invoice creation, and settlement detection.
- * 
+ *
  * Nothing on this page currently talks to the backend. The real flow is:
  *
  *   1. CheckoutPage → POST /store/orders  (Medusa)
