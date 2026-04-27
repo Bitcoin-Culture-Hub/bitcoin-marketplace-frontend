@@ -11,6 +11,25 @@ import type {
   SubmitOfferResponse,
 } from "@/types/shared"
 
+export type WaitlistSourceSite =
+  | "houseofnaka"
+  | "bitcoin-marketplace"
+  | "bitcoin-culture-hub"
+  | "bitcoin-for-collectors"
+  | "bitcoin-for-startups"
+  | "bitcoin-for-talent"
+
+export type SubscribeWaitlistInput = {
+  email: string
+  sourceSite: WaitlistSourceSite
+  sourcePage: string
+}
+
+export type SubscribeWaitlistResponse = {
+  ok: true
+  message: string
+}
+
 const apiBase = () =>
   import.meta.env.VITE_MEDUSA_BACKEND_URL || "http://localhost:9000"
 
@@ -105,6 +124,33 @@ export async function checkout(): Promise<CheckoutResponse> {
   return storeFetch<CheckoutResponse>("/store/cart/checkout", {
     method: "POST",
   })
+}
+
+export async function subscribeToWaitlist(
+  input: SubscribeWaitlistInput
+): Promise<SubscribeWaitlistResponse> {
+  const res = await fetch("/api/subscribe", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
+  })
+
+  const body = await parseJson(res)
+
+  if (!res.ok) {
+    const msg =
+      typeof body === "object" &&
+      body !== null &&
+      "message" in body &&
+      typeof (body as { message: unknown }).message === "string"
+        ? (body as { message: string }).message
+        : res.statusText || "Request failed"
+    throw new ApiError(msg, res.status, body)
+  }
+
+  return body as SubscribeWaitlistResponse
 }
 
 export async function submitOffer(input: {

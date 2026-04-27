@@ -1,6 +1,11 @@
+import { type FormEvent, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Send } from "lucide-react";
 import footerBg from "@/assets/footer-bg.png";
+import {
+  subscribeToWaitlist,
+  type WaitlistSourceSite,
+} from "@/services/store.api";
 
 const FacebookIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -29,6 +34,103 @@ const TelegramIcon = () => (
 interface FooterProps {
   variant?: "dark" | "marketplace";
 }
+
+type SubscribeState = "idle" | "loading" | "success" | "error";
+
+const WAITLIST_SOURCE_SITE: WaitlistSourceSite = "bitcoin-marketplace";
+const WAITLIST_SOURCE_PAGE = "homepage-footer";
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const INVALID_EMAIL_MESSAGE = "Please enter a valid email.";
+const SUBSCRIBE_SUCCESS_MESSAGE = "You’re subscribed.";
+const SUBSCRIBE_ERROR_MESSAGE = "Something went wrong. Please try again.";
+
+const isValidEmail = (email: string) => EMAIL_PATTERN.test(email);
+
+const MarketplaceSubscribeForm = () => {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<SubscribeState>("idle");
+  const [message, setMessage] = useState("");
+  const isSubmittingRef = useRef(false);
+  const feedbackId = useId();
+  const isLoading = status === "loading";
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (isSubmittingRef.current) return;
+
+    const trimmedEmail = email.trim();
+
+    if (!isValidEmail(trimmedEmail)) {
+      setStatus("error");
+      setMessage(INVALID_EMAIL_MESSAGE);
+      return;
+    }
+
+    isSubmittingRef.current = true;
+    setStatus("loading");
+    setMessage("");
+
+    try {
+      await subscribeToWaitlist({
+        email: trimmedEmail,
+        sourceSite: WAITLIST_SOURCE_SITE,
+        sourcePage: WAITLIST_SOURCE_PAGE,
+      });
+      setStatus("success");
+      setMessage(SUBSCRIBE_SUCCESS_MESSAGE);
+    } catch {
+      setStatus("error");
+      setMessage(SUBSCRIBE_ERROR_MESSAGE);
+    } finally {
+      isSubmittingRef.current = false;
+    }
+  };
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+
+    if (status !== "idle" && status !== "loading") {
+      setStatus("idle");
+      setMessage("");
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} aria-busy={isLoading} noValidate>
+      <div className="flex items-center max-w-[294px] h-12 bg-white/20 backdrop-blur-sm rounded-full pl-4 border border-white/10">
+        <input
+          type="email"
+          value={email}
+          onChange={(event) => handleEmailChange(event.target.value)}
+          placeholder="user@yourmail.com"
+          aria-label="Email address"
+          aria-describedby={feedbackId}
+          aria-invalid={message === INVALID_EMAIL_MESSAGE}
+          className="flex-1 min-w-0 bg-transparent text-sm tracking-[0.014em] text-white/90 placeholder-white/50 outline-none"
+        />
+        <button
+          type="submit"
+          aria-label="Subscribe"
+          disabled={isLoading}
+          className="w-12 h-12 bg-btc-orange rounded-full flex items-center justify-center shrink-0 hover:bg-btc-orange/90 transition-colors disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          <Send className="w-5 h-5 text-white" />
+        </button>
+      </div>
+      <p
+        id={feedbackId}
+        role="status"
+        aria-live="polite"
+        className={`min-h-5 max-w-[294px] pt-1 text-xs tracking-[0.014em] ${
+          status === "error" ? "text-red-200" : "text-[#DFDFDF]/80"
+        }`}
+      >
+        {message}
+      </p>
+    </form>
+  );
+};
 
 const Footer = ({ variant = "dark" }: FooterProps) => {
   if (variant === "marketplace") {
@@ -75,16 +177,7 @@ const Footer = ({ variant = "dark" }: FooterProps) => {
                 <p className="text-[15px] leading-relaxed tracking-[0.014em] text-[#DFDFDF]/90 max-w-[294px]">
                   Stay updated on new featured collections, and exclusive deals.
                 </p>
-                <div className="flex items-center max-w-[294px] h-12 bg-white/20 backdrop-blur-sm rounded-full pl-4 border border-white/10">
-                  <input
-                    type="email"
-                    placeholder="user@yourmail.com"
-                    className="flex-1 min-w-0 bg-transparent text-sm tracking-[0.014em] text-white/90 placeholder-white/50 outline-none"
-                  />
-                  <button className="w-12 h-12 bg-btc-orange rounded-full flex items-center justify-center shrink-0 hover:bg-btc-orange/90 transition-colors">
-                    <Send className="w-5 h-5 text-white" />
-                  </button>
-                </div>
+                <MarketplaceSubscribeForm />
                 <div className="flex items-center gap-4 mt-1">
                   {[
                     { icon: FacebookIcon, href: "#", label: "Facebook" },
