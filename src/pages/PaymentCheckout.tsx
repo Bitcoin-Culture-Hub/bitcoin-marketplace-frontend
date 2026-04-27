@@ -1,10 +1,9 @@
 /**
  * PaymentCheckout — Bitcoin settlement page (UI mock).
  *
- * ───────────────────────────────────────────────────────────────────────────
  * BACKEND INTEGRATION PLAN — we use BTCPay Server for all BTC pricing,
  * invoice creation, and settlement detection.
- * ───────────────────────────────────────────────────────────────────────────
+ * 
  * Nothing on this page currently talks to the backend. The real flow is:
  *
  *   1. CheckoutPage → POST /store/orders  (Medusa)
@@ -30,11 +29,8 @@
  *
  * Every mocked value / stubbed handler in this file is tagged with a
  * `TODO(backend):` comment so we can grep for them when we do the wire-up.
- * ───────────────────────────────────────────────────────────────────────────
  *
- * ───────────────────────────────────────────────────────────────────────────
  * TODO(route-protection): This page is NOT scoped to a specific order.
- * ───────────────────────────────────────────────────────────────────────────
  *   Today `/payment` only reads from `location.state`, which means:
  *     • Typing /payment directly → renders with empty data ($0, no image).
  *     • Refreshing / opening in a new tab → state is lost, page breaks.
@@ -49,7 +45,6 @@
  *     2. Backend: authorize the request — only the buyer on that order
  *        may view its invoice. Use the server-side price, never the
  *        client-sent value.
- * ───────────────────────────────────────────────────────────────────────────
  */
 
 import { useMemo, useState } from "react";

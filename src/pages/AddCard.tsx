@@ -27,6 +27,20 @@ import Header from "@/components/layout/Header";
 
 type VerificationState = "idle" | "checking" | "verified" | "not_found" | "exists";
 
+// TODO(backend): Hard-coded BTC→USD rate used ONLY for the live "≈ $X USD"
+//                hint shown under the Ask Price field. This MUST be
+//                replaced with a live rate from BTCPay Server (same source
+//                of truth we use in PaymentCheckout.tsx) — a static client
+//                multiplier will always drift from real market price and
+//                mislead sellers about what their BTC ask is worth in USD.
+//                We should NOT do btc/usd math on the client with a
+//                hard-coded rate.
+//                Fix: fetch the current BTC/USD rate from BTCPay Server
+//                (e.g. GET /rates or the quote endpoint) and swap this
+//                constant for the fetched value (cached + refreshed
+//                every ~30–60s).
+const MOCK_BTC_TO_USD_RATE = 65000;
+
 const AddCard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -75,12 +89,20 @@ const AddCard = () => {
 
   // Photo upload excluded per design
 
+  // When the seller chooses to list (fixed price or fixed+offers) we also
+  // require a positive BTC ask price. For "private" we don't need one.
+  const requiresPrice = listingIntent !== "private";
+  const askPriceNumber = parseFloat(askPrice);
+  const hasValidPrice =
+    !requiresPrice || (askPrice.trim() !== "" && askPriceNumber > 0);
+
   // Form validation
   const isFormValid =
-    gradingCompany &&
-    certNumber &&
-    grade &&
-    ownershipConfirmed;
+    !!gradingCompany &&
+    !!certNumber &&
+    !!grade &&
+    ownershipConfirmed &&
+    hasValidPrice;
 
   // Submit handler
   const handleSubmit = async () => {
@@ -97,9 +119,14 @@ const AddCard = () => {
         listingIntent,
         askPrice: listingIntent !== "private" ? askPrice : undefined,
       });
+      const isListed = listingIntent !== "private";
       toast({
-        title: "Added to your collection ✓",
-        description: `${gradingCompany} ${grade} · Cert #${certNumber}`,
+        title: isListed
+          ? "Added & listed for sale ✓"
+          : "Added to your collection ✓",
+        description: isListed
+          ? `${gradingCompany} ${grade} · Cert #${certNumber} · Ask ${askPrice} BTC`
+          : `${gradingCompany} ${grade} · Cert #${certNumber}`,
       });
       navigate("/inventory");
     } catch (err: any) {
@@ -271,13 +298,16 @@ const AddCard = () => {
           <section className="space-y-6 pt-4 border-t border-border">
 
             {/* Listing */}
-            <div className="space-y-4 opacity-40 pointer-events-none select-none">
+            <div className="space-y-4">
               <h3 className="text-sm font-medium text-foreground">
-                Listing <span className="text-xs font-normal text-muted-foreground">(Coming Soon)</span>
+                Listing <span className="text-xs font-normal text-muted-foreground"></span>
               </h3>
 
               <RadioGroup
                 value={listingIntent}
+                onValueChange={(v) =>
+                  setListingIntent(v as "private" | "fixed" | "both")
+                }
                 className="space-y-2"
               >
                 {[
@@ -338,7 +368,11 @@ const AddCard = () => {
                 </div>
                 {askPrice && (
                   <p className="text-xs text-muted-foreground">
-                    ≈ ${(parseFloat(askPrice || "0") * 65000).toLocaleString()} USD
+                    {/* TODO(backend): swap MOCK_BTC_TO_USD_RATE for a live
+                        rate fetched from BTCPay Server */}
+                    ≈ ${(
+                      parseFloat(askPrice || "0") * MOCK_BTC_TO_USD_RATE
+                    ).toLocaleString()} USD
                   </p>
                 )}
               </div>
@@ -361,8 +395,10 @@ const AddCard = () => {
             >
               {isSubmitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
+              ) : listingIntent === "private" ? (
                 "Add to Collection"
+              ) : (
+                "Add & List for Sale"
               )}
             </Button>
           </div>

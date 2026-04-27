@@ -9,6 +9,7 @@ import { CardImageProvider } from "@/providers/CardImageProvider";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import ScrollToTop from "@/components/layout/ScrollToTop";
+import Homepage from "./pages/Homepage";
 import Login from "./pages/Login";
 import Marketplace from "./pages/Marketplace";
 import ManageInventory from "./pages/ManageInventory";
@@ -53,7 +54,7 @@ const App = () => (
             <Routes>
               {/* Public */}
               <Route path="/" element={<Navigate to="/homepage" replace />} />
-              <Route path="/homepage" element={<Marketplace />} />
+              <Route path="/homepage" element={<Homepage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/templates/:templateId" element={<CardPage />} />

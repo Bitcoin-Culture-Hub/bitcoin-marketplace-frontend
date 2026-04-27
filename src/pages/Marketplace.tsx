@@ -1,11 +1,8 @@
 import { useState, useCallback } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import MarketplaceHero from "@/components/marketplace/MarketplaceHero";
 import TemplateFilterSidebar from "@/components/marketplace/TemplateFilterSidebar";
 import TemplateGrid from "@/components/marketplace/TemplateGrid";
-import TrendingCollectors from "@/components/marketplace/TrendingCollectors";
-import CreateAndSell from "@/components/marketplace/CreateAndSell";
 
 const Marketplace = () => {
   // Search state (lifted for hero + grid)
@@ -49,12 +46,6 @@ const Marketplace = () => {
     <div className="min-h-screen bg-[#fefefe] flex flex-col">
       <Header variant="light" />
 
-      {/* Hero Section */}
-      <MarketplaceHero
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-      />
-
       {/* Sidebar + Grid Section */}
       <section className="flex bg-[#fefefe]">
         <TemplateFilterSidebar
@@ -68,7 +59,7 @@ const Marketplace = () => {
           onAvailableOnlyChange={setAvailableOnly}
           onReset={handleReset}
         />
-        <div className="flex-1 px-6 py-8 max-w-[1052px]">
+        <div className="flex-1 px-6 pb-20 max-w-[1052px]">
           <TemplateGrid
             selectedSeries={selectedSeries}
             selectedGradingCompanies={selectedGradingCompanies}
@@ -82,9 +73,6 @@ const Marketplace = () => {
         </div>
       </section>
 
-      {/* Bottom Sections */}
-      <TrendingCollectors />
-      <CreateAndSell />
       <Footer variant="marketplace" />
     </div>
   );

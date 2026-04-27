@@ -222,14 +222,6 @@ const CardPage = () => {
               </button>
             </div>
 
-            {/*
-              Title / description / pills are clamped so the right column
-              never grows taller than the square image on the left, which
-              keeps the Buy Now / Make Offer buttons (pinned with mt-auto
-              below) aligned with the image's bottom edge for EVERY card,
-              regardless of title length.
-            */}
-
             {/* Title */}
             <h1 className="font-display font-bold text-gray-900 leading-[1.05] tracking-tight text-4xl md:text-5xl mb-4 line-clamp-2">
               {template.name}
@@ -284,8 +276,7 @@ const CardPage = () => {
               </div>
             )}
 
-            {/* Actions — mt-auto pins these to the bottom of the right
-                column so they sit flush with the image's bottom edge */}
+            {/* Actions */}
             <div className="space-y-3 mt-auto pt-4 max-w-[420px]">
               <Button
                 className="w-full h-12 rounded-2xl bg-btc-orange hover:bg-btc-orange/90 text-white font-medium text-base shadow-none"
