@@ -3,6 +3,7 @@ import { Mail, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
+import { useEmailVerificationActions } from "@/hooks/medusa/useEmailVerification";
 
 interface EmailVerificationStepProps {
   email: string;
@@ -18,9 +19,15 @@ const EmailVerificationStep = ({
   onBack,
 }: EmailVerificationStepProps) => {
   const { toast } = useToast();
+  const { verifyCode, resendCode } = useEmailVerificationActions();
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    return error instanceof Error ? error.message : fallback;
+  };
 
   // Already verified - auto-advance
   useEffect(() => {
@@ -41,24 +48,48 @@ const EmailVerificationStep = ({
     if (code.length !== 6) return;
 
     setIsVerifying(true);
-    // Simulate verification
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Mock: accept any 6-digit code
-    toast({
-      title: "Email verified",
-      description: "Your email has been confirmed.",
-    });
-    setIsVerifying(false);
-    onVerified();
+    try {
+      const result = await verifyCode(code);
+      toast({
+        title: "Email verified",
+        description: result.already_verified
+          ? "Your email was already confirmed."
+          : "Your email has been confirmed.",
+      });
+      onVerified();
+    } catch (err: unknown) {
+      toast({
+        title: "Verification failed",
+        description: getErrorMessage(
+          err,
+          "Could not verify that code. Please try again."
+        ),
+        variant: "destructive",
+      });
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
-  const handleResend = () => {
-    setResendCooldown(60);
-    toast({
-      title: "Code sent",
-      description: `Verification code sent to ${email}`,
-    });
+  const handleResend = async () => {
+    setIsResending(true);
+    try {
+      const result = await resendCode();
+      setCode("");
+      setResendCooldown(60);
+      toast({
+        title: "Code sent",
+        description: `Verification code sent to ${result.email}`,
+      });
+    } catch (err: unknown) {
+      toast({
+        title: "Could not resend code",
+        description: getErrorMessage(err, "Please try again in a moment."),
+        variant: "destructive",
+      });
+    } finally {
+      setIsResending(false);
+    }
   };
 
   if (isVerified) {
@@ -114,9 +145,10 @@ const EmailVerificationStep = ({
           ) : (
             <button
               onClick={handleResend}
+              disabled={isResending}
               className="text-xs text-muted-foreground hover:text-foreground underline"
             >
-              Resend code
+              {isResending ? "Sending..." : "Resend code"}
             </button>
           )}
         </div>
@@ -136,7 +168,9 @@ const EmailVerificationStep = ({
       </div>
 
       <p className="text-[10px] text-center text-muted-foreground">
-        <button className="underline hover:text-foreground">Change email</button>
+        <button onClick={onBack} className="underline hover:text-foreground">
+          Change email
+        </button>
       </p>
     </div>
   );

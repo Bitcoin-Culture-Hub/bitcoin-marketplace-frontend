@@ -22,6 +22,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<void>
   register: (data: RegisterData) => Promise<void>
   logout: () => Promise<void>
+  refreshCustomer: () => Promise<Customer | null>
 }
 
 export type RegisterData = {
@@ -37,20 +38,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [customer, setCustomer] = useState<Customer | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const refreshCustomer = useCallback(async () => {
+    try {
+      const { customer } = await medusa.store.customer.retrieve()
+      const nextCustomer = customer as Customer
+      setCustomer(nextCustomer)
+      return nextCustomer
+    } catch {
+      setCustomer(null)
+      return null
+    }
+  }, [])
+
   // Rehydrate session on mount
   useEffect(() => {
-    medusa.store.customer
-      .retrieve()
-      .then(({ customer }) => setCustomer(customer as Customer))
-      .catch(() => setCustomer(null))
-      .finally(() => setLoading(false))
-  }, [])
+    refreshCustomer().finally(() => setLoading(false))
+  }, [refreshCustomer])
 
   const login = useCallback(async (email: string, password: string) => {
     await medusa.auth.login("customer", "emailpass", { email, password })
-    const { customer } = await medusa.store.customer.retrieve()
-    setCustomer(customer as Customer)
-  }, [])
+    await refreshCustomer()
+  }, [refreshCustomer])
 
   const register = useCallback(
     async ({ email, password, first_name = "", last_name = "" }: RegisterData) => {
@@ -100,7 +108,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ customer, loading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ customer, loading, login, register, logout, refreshCustomer }}
+    >
       {children}
     </AuthContext.Provider>
   )
