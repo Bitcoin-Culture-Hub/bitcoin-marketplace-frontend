@@ -9,6 +9,7 @@ import { CardImageProvider } from "@/providers/CardImageProvider";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import ScrollToTop from "@/components/layout/ScrollToTop";
+import Homepage from "./pages/Homepage";
 import Login from "./pages/Login";
 import Marketplace from "./pages/Marketplace";
 import ManageInventory from "./pages/ManageInventory";
@@ -18,6 +19,8 @@ import VerifyStorefront from "./pages/VerifyStorefront";
 import BulkImport from "./pages/BulkImport";
 import NotFound from "./pages/NotFound";
 import OrderConfirmPage from "./pages/OrderConfirmPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import PaymentCheckout from "./pages/PaymentCheckout";
 import OrderSuccessPage from "./pages/OrderSuccessPage";
 import MyOffers from "./pages/MyOffers"
 import ProfilePage from "./pages/ProfilePage"
@@ -51,7 +54,7 @@ const App = () => (
             <Routes>
               {/* Public */}
               <Route path="/" element={<Navigate to="/homepage" replace />} />
-              <Route path="/homepage" element={<Marketplace />} />
+              <Route path="/homepage" element={<Homepage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/marketplace/templates/:templateId" element={<CardPage />} />
@@ -79,6 +82,18 @@ const App = () => (
                 <Route index element={<DashboardOverview />} />
               </Route>
               <Route path="/account/offers" element={<ProtectedRoute><MyOffers /></ProtectedRoute>} />
+              {/*
+                TODO(route-protection): `/checkout` and `/payment` are only
+                auth-protected. They are NOT scoped to a specific listing
+                or order — both pages just read location.state. When the
+                backend is wired up, change these to:
+                  /checkout/:listingId
+                  /orders/:orderId/pay
+                and fetch the resource by id. See the banner comments in
+                CheckoutPage.tsx and PaymentCheckout.tsx for the full fix.
+              */}
+              <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+              <Route path="/payment" element={<ProtectedRoute><PaymentCheckout /></ProtectedRoute>} />
               <Route path="/orders/:orderId/confirm" element={<ProtectedRoute><OrderConfirmPage /></ProtectedRoute>} />
               <Route path="/orders/:orderId/success" element={<ProtectedRoute><OrderSuccessPage /></ProtectedRoute>} />
 

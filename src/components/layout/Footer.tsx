@@ -42,7 +42,7 @@ const Footer = ({ variant = "dark" }: FooterProps) => {
               {/* Brand */}
               <div className="flex flex-col gap-5">
                 <span className="text-[56px] lg:text-[70px] font-black leading-none tracking-[0.014em] text-white font-sans">
-                  LOGO
+                  CLCT
                 </span>
                 <p className="text-[15px] leading-relaxed tracking-[0.014em] text-[#DFDFDF]/90 max-w-[320px]">
                   Discover, buy, and trade collectible cards worldwide, connecting passionate collectors with trusted sellers in a secure community.

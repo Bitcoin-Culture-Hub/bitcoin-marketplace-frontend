@@ -1,24 +1,41 @@
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import HomepageHero from "@/components/homepage/HomepageHero";
-import TrustStrip from "@/components/homepage/TrustStrip";
-import HowItWorks from "@/components/homepage/HowItWorks";
-import FeaturedTemplates from "@/components/homepage/FeaturedTemplates";
-import BuyerSellerSplit from "@/components/homepage/BuyerSellerSplit";
+import FeaturedCategories from "@/components/homepage/FeaturedCategories";
+import IconicMoments from "@/components/homepage/IconicMoments";
+import BecomeADealer from "@/components/homepage/BecomeADealer";
+import Podcast from "@/components/homepage/Podcast";
+import Newsletter from "@/components/homepage/Newsletter";
 import Footer from "@/components/layout/Footer";
 
 const Homepage = () => {
+  const { hash } = useLocation();
+
+  useEffect(() => {
+    if (!hash) return;
+    const id = hash.slice(1);
+    // Defer one frame so the section is mounted before scrolling.
+    const raf = requestAnimationFrame(() => {
+      document
+        .getElementById(id)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [hash]);
+
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Header />
+    <div className="min-h-screen bg-[#fefefe] flex flex-col">
+      <Header variant="light" />
       <main className="flex-1">
         <HomepageHero />
-        <FeaturedTemplates />
-        <div id="how-it-works">
-          <HowItWorks />
-        </div>
-        <BuyerSellerSplit />
+        <FeaturedCategories />
+        <IconicMoments />
+        <BecomeADealer />
+        <Podcast />
+        <Newsletter />
       </main>
-      <Footer />
+      <Footer variant="marketplace" />
     </div>
   );
 };

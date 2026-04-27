@@ -64,9 +64,36 @@ export function useSubmitCard() {
 
       return response.json();
     },
-    onSuccess: () => {
-      // Refresh the seller's inventory
-      queryClient.invalidateQueries({ queryKey: ["inventory", customer?.id] });
+    onSuccess: async () => {
+      // Force every downstream view that reads from the product catalog to
+      // refetch — not just mark-as-stale. `invalidateQueries` alone leaves
+      // inactive queries (e.g. /dashboard/products when you're still on the
+      // /submit page) stale-but-unrefreshed until they remount, which is
+      // why sellers would land on the products page and still not see the
+      // card they just added.
+      //
+      // Using partial keys (e.g. ["inventory"]) invalidates every variant
+      // of that key, including the user-scoped ["inventory", customer.id].
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["inventory"],
+          refetchType: "all",
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["templates"],
+          refetchType: "all",
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["vendor"],
+          refetchType: "all",
+        }),
+      ]);
+
+      if (customer?.id) {
+        await queryClient.refetchQueries({
+          queryKey: ["inventory", customer.id],
+        });
+      }
     },
   });
 }

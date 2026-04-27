@@ -80,7 +80,7 @@ const ForgotPassword = ({ onBack, onSuccess }: ForgotPasswordProps) => {
               <Button
                 variant="ghost"
                 onClick={onBack}
-                className="text-sm text-muted-foreground hover:text-foreground"
+                className="text-sm text-muted-foreground hover:bg-btc-orange rounded-lg"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to login
@@ -135,7 +135,7 @@ const ForgotPassword = ({ onBack, onSuccess }: ForgotPasswordProps) => {
         <Button
           type="submit"
           disabled={isLoading || !email}
-          className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-display font-medium text-xs uppercase tracking-[0.15em] rounded-xl"
+          className="w-full h-11 bg-btc-orange hover:bg-btc-orange/90 text-primary-foreground font-display font-semibold text-sm rounded-xl"
         >
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { medusa } from "@/lib/medusa";
+import { listAllStoreProducts } from "@/services/medusa-products";
 import { useAuth } from "@/context/AuthContext";
 import type { CollectionTemplate, CopyState } from "@/components/collection/CollectionRow";
 
@@ -52,10 +53,10 @@ export function useInventory() {
   return useQuery({
     queryKey: ["inventory", customer?.id],
     queryFn: async () => {
-      const { products } = await medusa.store.product.list({
-        limit: 100,
+      const products = await listAllStoreProducts({
         fields:
           "id,title,handle,collection.*,metadata,variants.*,variants.prices.*",
+        order: "-created_at",
       });
 
       // Filter to products that have at least one variant owned by this seller.

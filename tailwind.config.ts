@@ -72,6 +72,15 @@ export default {
         card: "0px 4px 16px rgba(22, 22, 22, 0.05)",
         "card-hover": "0px 4px 16px rgba(0, 0, 0, 0.08)",
       },
+      keyframes: {
+        marquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
+      },
+      animation: {
+        marquee: "marquee 38s linear infinite",
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

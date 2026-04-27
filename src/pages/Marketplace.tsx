@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import MarketplaceHero from "@/components/marketplace/MarketplaceHero";
@@ -16,10 +16,7 @@ import {
 const RESULTS_SCROLL_MARGIN_PX = 116;
 
 const Marketplace = () => {
-  // Search state (lifted for hero + grid)
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Filter state
   const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
   const [selectedGradingCompanies, setSelectedGradingCompanies] = useState<string[]>([]);
   const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
@@ -71,13 +68,17 @@ const Marketplace = () => {
   const handleRemoveFilter = useCallback((type: MarketplaceFilterType, value: string) => {
     switch (type) {
       case "series":
-        setSelectedSeries((prev) => prev.filter((s) => s !== value));
+        setSelectedSeries((prev) => prev.filter((series) => series !== value));
         break;
       case "grading":
-        setSelectedGradingCompanies((prev) => prev.filter((c) => c !== value));
+        setSelectedGradingCompanies((prev) =>
+          prev.filter((company) => company !== value)
+        );
         break;
       case "grade":
-        setSelectedGrades((prev) => prev.filter((g) => `Grade ${g}` !== value && g !== value));
+        setSelectedGrades((prev) =>
+          prev.filter((grade) => `Grade ${grade}` !== value && grade !== value)
+        );
         break;
       case "availability":
         setAvailableOnly(false);
@@ -109,13 +110,11 @@ const Marketplace = () => {
     <div className="min-h-screen bg-[#fefefe] flex flex-col">
       <Header variant="light" />
 
-      {/* Hero Section */}
       <MarketplaceHero
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
       />
 
-      {/* Sidebar + Grid Section */}
       <section className="flex bg-[#fefefe]">
         <TemplateFilterSidebar
           selectedSeries={selectedSeries}
@@ -137,7 +136,7 @@ const Marketplace = () => {
         />
         <div
           ref={resultsRef}
-          className="flex-1 px-6 py-8 max-w-[1052px]"
+          className="flex-1 px-6 pt-8 pb-20 max-w-[1052px]"
           style={{ scrollMarginTop: `${RESULTS_SCROLL_MARGIN_PX}px` }}
         >
           <TemplateGrid
@@ -158,7 +157,6 @@ const Marketplace = () => {
         </div>
       </section>
 
-      {/* Bottom Sections */}
       <TrendingCollectors />
       <CreateAndSell />
       <Footer variant="marketplace" />
