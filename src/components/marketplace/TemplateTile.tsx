@@ -181,7 +181,7 @@ const TemplateTile = ({
             </span>
           </div>
 
-          {/* BID Button */}
+          {/* BUY Button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -189,7 +189,7 @@ const TemplateTile = ({
             }}
             className="bg-[#F7931A] text-white rounded-btn px-4 py-2.5 text-[14px] font-medium flex items-center gap-2 hover:brightness-110 transition-all"
           >
-            BID
+            BUY
             <ArrowRight size={16} />
           </button>
         </div>
